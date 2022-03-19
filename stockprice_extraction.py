@@ -3,9 +3,10 @@
 #from functools import reduce
 import pandas as pd
 import yfinance as yf
-from google.cloud import bigquery
+#from google.cloud import bigquery
 import os
-
+from functools import reduce
+import numpy as np
 
 
 credentials_path = 'C:/Users/gratz/OneDrive/Desktop/SGXStockDataPipeline/key.json'
@@ -24,25 +25,24 @@ stock = ['C31.SI','ComfortDelGro Corporation Limited','Oversea-Chinese Banking C
            ,'Hongkong Land Holdings Limited','Jardine Matheson Holdings Limited','Dairy Farm International Holdings Limited']
 
 
-
-def fetch_sgx_function(): # <-- Remember to include "**kwargs" in all the defined functions 
+# Airflow Functions
+def fetch_stock_function(): 
     print('1 Fetching stock prices and remove duplicates...')
-    ohlcv_daily = pd.DataFrame(columns=["Date", 'Stock', 'Ticker', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume'])
+    ohlcv_daily = {}
     i = 0
     for ticker in tickers:
-        prices = yf.download(ticker, period = '1d').iloc[: , :6].dropna(axis=0, how='any')
+        prices = yf.download(ticker, period = '5y').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
         prices = prices.reset_index()
         prices.insert(loc = 1, column = 'Ticker', value = ticker)
         prices.insert(loc = 1, column = 'Stock', value = stock[i])
         i += 1
         data = pd.DataFrame(prices)
-        ohlcv_daily = ohlcv_daily.append(data, ignore_index=True)
-    ohlcv_daily = ohlcv_daily.rename(columns={'Adj Close': 'Adj_Close'})
+        ohlcv_daily[ticker] = data
     return ohlcv_daily  # <-- This list is the output of the fetch_prices_function and the input for the functions below
 
     
-def fetch_sgx_dividend(): # <-- Remember to include "**kwargs" in all the defined functions 
+def fetch_stock_dividend(): # <-- Remember to include "**kwargs" in all the defined functions 
     dividend_quarterly = pd.DataFrame(columns=["Date", 'Stock', 'Ticker', 'Dividends'])   
     i = 0
     for ticker in tickers:
@@ -93,14 +93,62 @@ def stocks_table_function(**kwargs):
     stocks_adj_close_f.columns = ['Symbol', 'Date' , 'Adj. Price']
     stocks_adj_close_f.set_index('Symbol', inplace = True)
 
-    #######################################
+# Derived Columns Functions - Transformations
+def MACD(DF, slow, fast, smooth):
+    exp1 = DF["Close"].ewm(span = fast, adjust = False).mean()
+    exp2 = DF["Close"].ewm(span = slow, adjust = False).mean()
+    macd = exp1-exp2
+    signal = macd.ewm(span = smooth, adjust = False).mean()
+    DF["MACD"] = macd
+    DF["MACD_SIG"] = signal
+    return (DF["MACD"],DF["MACD_SIG"])
+
+def OBV(DF):
+    df = DF.copy()
+    """function to calculate On Balance Volume"""
+    df['daily_ret'] = df['Close'].pct_change()
+    df['direction'] = np.where(df['daily_ret']>=0,1,-1)
+    df['direction'][0] = 0
+    df['vol_adj'] = df['Volume'] * df['direction']
+    df['obv'] = df['vol_adj'].cumsum()
+    return df['obv']
+
+def trade_signal(df,i, ticker):
+    "function to generate signal"
+    if df[ticker]['OBV'][i] > df[ticker]['OBV_EMA'][i] and \
+        df[ticker]['MACD'][i] > df[ticker]['MACD_SIG'][i]:
+            df[ticker]['SIGNAL'][i] = "STRONG BUY"
+    elif df[ticker]['OBV'][i] > df[ticker]['OBV_EMA'][i] or \
+        df[ticker]['MACD'][i] > df[ticker]['MACD_SIG'][i]:
+            df[ticker]['SIGNAL'][i] = "BUY"
+    elif df[ticker]['OBV'][i] < df[ticker]['OBV_EMA'][i] and \
+        df[ticker]['MACD'][i] < df[ticker]['MACD_SIG'][i]:
+            df[ticker]['SIGNAL'][i] = "STRONG SELL"
+    elif df[ticker]['OBV'][i] < df[ticker]['OBV_EMA'][i] or \
+        df[ticker]['MACD'][i] < df[ticker]['MACD_SIG'][i]:
+            df[ticker]['SIGNAL'][i] = "SELL"
+    else:
+        df[ticker]['SIGNAL'][i] = 'NEUTRAL'
 
 
-df = fetch_sgx_function()
-print(df)
+# Extract
+ohlcv_daily = fetch_stock_function()
 
+# Transformation
+# Generate Technical Indicators
+for ticker in tickers:
+    ohlcv_daily[ticker]['OBV'] = OBV(ohlcv_daily[ticker])
+    ohlcv_daily[ticker]['OBV_EMA'] = ohlcv_daily[ticker]['OBV'].ewm(com=20).mean()
+    ohlcv_daily[ticker]['MACD'] = MACD(ohlcv_daily[ticker],26,12,9)[0]
+    ohlcv_daily[ticker]['MACD_SIG'] = MACD(ohlcv_daily[ticker],26,12,9)[1]
+    ohlcv_daily[ticker]['SIGNAL'] = "None"
+    
+# Generate Signals
+for ticker in tickers:
+    for i in range(0, len(ohlcv_daily[ticker])):
+        trade_signal(ohlcv_daily, i, ticker)
 
-
+'''
 client = bigquery.Client()
 table_id = "bustling-brand-344211.IS3107Project.SGX_Daily "
 
@@ -121,4 +169,6 @@ print(
         table.num_rows, len(table.schema), table_id
     )
 )
+'''
+
 
