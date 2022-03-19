@@ -1,12 +1,16 @@
-
-from datetime import datetime, timedelta  
-import datetime as dt
+#from datetime import datetime, timedelta  
+#import datetime as dt
+#from functools import reduce
 import pandas as pd
 import yfinance as yf
-from urllib.request import Request, urlopen
-import requests
-import lxml
-from functools import reduce
+from google.cloud import bigquery
+import os
+
+
+
+credentials_path = 'C:/Users/gratz/OneDrive/Desktop/SGXStockDataPipeline/key.json'
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 
 
 tickers = ['C31.SI','C52.SI','O39.SI','U96.SI','N2IU.SI','T39.SI','S63.SI','S58.SI','U11.SI'
@@ -21,26 +25,44 @@ stock = ['C31.SI','ComfortDelGro Corporation Limited','Oversea-Chinese Banking C
 
 
 
-def fetch_prices_function(): # <-- Remember to include "**kwargs" in all the defined functions 
+def fetch_sgx_function(): # <-- Remember to include "**kwargs" in all the defined functions 
     print('1 Fetching stock prices and remove duplicates...')
-    ohlcv_daily = {}
+    ohlcv_daily = pd.DataFrame(columns=["Date", 'Stock', 'Ticker', 'Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume'])
     i = 0
     for ticker in tickers:
-        prices = yf.download(ticker, period = '5y').iloc[: , :6].dropna(axis=0, how='any')
+        prices = yf.download(ticker, period = '1d').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
         prices = prices.reset_index()
         prices.insert(loc = 1, column = 'Ticker', value = ticker)
         prices.insert(loc = 1, column = 'Stock', value = stock[i])
         i += 1
         data = pd.DataFrame(prices)
-        ohlcv_daily[ticker] = data
+        ohlcv_daily = ohlcv_daily.append(data, ignore_index=True)
+    ohlcv_daily = ohlcv_daily.rename(columns={'Adj Close': 'Adj_Close'})
     return ohlcv_daily  # <-- This list is the output of the fetch_prices_function and the input for the functions below
-    print('Completed \n\n')
+
+    
+def fetch_sgx_dividend(): # <-- Remember to include "**kwargs" in all the defined functions 
+    dividend_quarterly = pd.DataFrame(columns=["Date", 'Stock', 'Ticker', 'Dividends'])   
+    i = 0
+    for ticker in tickers:
+        dividend = yf.Ticker(ticker).dividends
+        if len(dividend) > 0:
+            dividend = pd.DataFrame({'Date':dividend.index, 'Dividends':dividend.values})
+            dividend = dividend[(dividend['Date'] > "2022-01-01") & (dividend['Date'] < "2022-04-01")]
+            dividend.insert(loc = 1, column = 'Ticker', value = ticker)
+            dividend.insert(loc = 1, column = 'Stock', value = stock[i])
+            dividend_quarterly  =  dividend_quarterly.append(dividend, ignore_index=True)
+        i += 1
+    print(dividend_quarterly)
+    dividend_quarterly.to_csv("aa.csv")
+    return dividend_quarterly 
+    
         
  
 def stocks_plot_function(**kwargs): 
     print('2 Pulling stocks_prices to concatenate sub-lists to create a combined dataset + write to CSV file...')
-    ti = kwargs['ti']
+    ti = kwargs['Ticker']
     stocks_prices = ti.xcom_pull(task_ids='fetch_prices_task') # <-- xcom_pull is used to pull the stocks_prices list generated above
     stock_plots_data = pd.concat(stocks_prices, ignore_index = True)
     stock_plots_data.to_csv('/Users/yuting/airflow/stocks_plots_data.csv', index = False)
@@ -74,10 +96,29 @@ def stocks_table_function(**kwargs):
     #######################################
 
 
-
-ohlcv_daily = fetch_prices_function()
-
-
+df = fetch_sgx_function()
+print(df)
 
 
+
+client = bigquery.Client()
+table_id = "bustling-brand-344211.IS3107Project.SGX_Daily "
+
+job_config = bigquery.LoadJobConfig(schema=[
+    bigquery.SchemaField("Stock", "STRING"),
+    bigquery.SchemaField("Ticker", "STRING"),
+])
+
+job = client.load_table_from_dataframe(
+    df, table_id, job_config=job_config
+)
+
+job.result()
+
+table = client.get_table(table_id)  # Make an API request.
+print(
+    "Loaded {} rows and {} columns to {}".format(
+        table.num_rows, len(table.schema), table_id
+    )
+)
 
