@@ -4,6 +4,15 @@ from airflow.operators.python_operator import PythonOperator
 from financialnews_extraction import extract
 from financialnews_extraction import transform
 from financialnews_extraction import load
+from portfolio_extraction import extract
+from portfolio_extraction import transform
+from portfolio_extraction import load
+from STI_component_extraction import load
+from dividend_extraction import extract
+from dividend_extraction import load
+from stockprice_extraction import extract
+from stockprice_extraction import transform
+from stockprice_extraction import load
 
 with DAG(
     'financialnews_extraction',
