@@ -12,7 +12,7 @@ import nltk
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 sid = SentimentIntensityAnalyzer()
 
-def getBacklog():
+def financialnews_backlog():
     url = "https://www.marketwatch.com/investing/index/sti?countrycode=sg"
     headlines = []
     dates = []
@@ -21,7 +21,7 @@ def getBacklog():
 
     result = requests.get(url, "html.parser")
     soup = bs4.BeautifulSoup(result.text, "html.parser")
-    text = soup.find_all(class_= "element element--article")
+    text = soup.find_all(class_= "element element--article")[0]
     
     for row in text:
         try:
@@ -52,8 +52,8 @@ def getBacklog():
     df = pd.DataFrame({"Headline": headlines, "Date": dates, "URL": links, "Sentiment": sentiment})
     # print(df)
 
-    credentials_path = 'C:/Users/hewtu/Documents/GitHub/SGXStockDataPipeline/key.json'
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 
     client = bigquery.Client()
     table_id = "bustling-brand-344211.IS3107Project.News Sentiment"  
@@ -68,7 +68,7 @@ def getBacklog():
     job = client.load_table_from_dataframe(
         df, table_id, job_config=job_config
     )
-
+ 
     job.result()
 
     table = client.get_table(table_id)  # Make an API request.
@@ -78,9 +78,7 @@ def getBacklog():
         )
     )
     
-getBacklog()
-
-def extract(ti):
+def financialnews_extract(ti):
     url = "https://www.marketwatch.com/investing/index/sti?countrycode=sg"
 
     result = requests.get(url, "html.parser")
@@ -114,7 +112,7 @@ def extract(ti):
 
     ti.xcom_push(key = 'headline_date_link', value = headline_data_link)
 
-def transform(ti):
+def financialnews_transform(ti):
     headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtraction'])[0]
 
     headlines = headline_date_link['Headline']
@@ -130,7 +128,7 @@ def transform(ti):
 
     ti.xcom_push(key = 'scores', value = scores)
 
-def load(ti):
+def financialnews_load(ti):
     if ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsExtraction']):
         print('No articles for the day')
         return 
@@ -139,31 +137,31 @@ def load(ti):
     headline_date_link['Sentiment'].extend(scores)
     df = pd.DataFrame(headline_date_link)
 
-    # print(df)
-    # print(headline_date_link)
+    print(df)
+    print(headline_date_link)
     
-    credentials_path = 'C:/Users/hewtu/Documents/GitHub/SGXStockDataPipeline/key.json'
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    # credentials_path = 'C:/Users/hewtu/Documents/GitHub/SGXStockDataPipeline/key.json'
+    # os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 
-    client = bigquery.Client()
-    table_id = "bustling-brand-344211.IS3107Project.News Sentiment"  
+    # client = bigquery.Client()
+    # table_id = "bustling-brand-344211.IS3107Project.News Sentiment"  
 
-    job_config = bigquery.LoadJobConfig(schema=[
-        bigquery.SchemaField("Headline", "STRING"),
-        bigquery.SchemaField("Date", "TIMESTAMP"),
-        bigquery.SchemaField("URL", "STRING"),
-        bigquery.SchemaField("Sentiment", "FLOAT"),
-    ])
+    # job_config = bigquery.LoadJobConfig(schema=[
+    #     bigquery.SchemaField("Headline", "STRING"),
+    #     bigquery.SchemaField("Date", "TIMESTAMP"),
+    #     bigquery.SchemaField("URL", "STRING"),
+    #     bigquery.SchemaField("Sentiment", "FLOAT"),
+    # ])
 
-    job = client.load_table_from_dataframe(
-        df, table_id, job_config=job_config
-    )
+    # job = client.load_table_from_dataframe(
+    #     df, table_id, job_config=job_config
+    # )
 
-    job.result()
+    # job.result()
 
-    table = client.get_table(table_id)  # Make an API request.
-    print(
-        "Loaded {} rows and {} columns to {}".format(
-            table.num_rows, len(table.schema), table_id
-        )
-    )
+    # table = client.get_table(table_id)  # Make an API request.
+    # print(
+    #     "Loaded {} rows and {} columns to {}".format(
+    #         table.num_rows, len(table.schema), table_id
+    #     )
+    # )
