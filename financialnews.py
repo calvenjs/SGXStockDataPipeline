@@ -2,7 +2,6 @@ import bs4
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
-import json
 
 from google.cloud import bigquery
 import os
@@ -56,7 +55,8 @@ def financialnews_backlog():
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
 
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.IS3107Project.News Sentiment"  
+    table_id = "bustling-brand-344211.Reference.Financial news"  
+
 
     job_config = bigquery.LoadJobConfig(schema=[
         bigquery.SchemaField("Headline", "STRING"),
@@ -71,12 +71,8 @@ def financialnews_backlog():
  
     job.result()
 
-    table = client.get_table(table_id)  # Make an API request.
-    print(
-        "Loaded {} rows and {} columns to {}".format(
-            table.num_rows, len(table.schema), table_id
-        )
-    )
+    print('Successfully loaded stock prices')
+
     
 def financialnews_extract(ti):
     url = "https://www.marketwatch.com/investing/index/sti?countrycode=sg"
@@ -85,7 +81,7 @@ def financialnews_extract(ti):
     soup = bs4.BeautifulSoup(result.text, "html.parser")
     text = soup.find_all(class_= "element element--article")
 
-    headline_data_link = {"Headline": [], "Date": [], "Link": [], "Sentiment": []}
+    headline_data_link = {"Headline": [], "Date": [], "URL": [], "Sentiment": []}
 
     for row in text:
         try:
@@ -95,7 +91,13 @@ def financialnews_extract(ti):
             print('date mising')
             continue
 
-        if datetime.strptime(date[:10],'%Y-%m-%d') == datetime(2022,3,19): #datetime.today() - timedelta(1):
+        article_date = datetime.strptime(date[:10],'%Y-%m-%d')
+        yesterday = datetime.today() - timedelta(1)
+        print(yesterday.date())
+        print(article_date.date())
+
+        if article_date.date() == yesterday.date():
+            print('same date')
             try:
                 headline_data_link['Date'].append(date)
                 headline = row.h3.text.strip()
@@ -106,21 +108,21 @@ def financialnews_extract(ti):
             
             try:
                 link = row.find(class_ = "link")["href"]
-                headline_data_link['Link'].append(link)
+                headline_data_link['URL'].append(link)
             except:
                 print('link missing')
 
     ti.xcom_push(key = 'headline_date_link', value = headline_data_link)
 
 def financialnews_transform(ti):
-    headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtraction'])[0]
+    headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtract'])[0]
 
     headlines = headline_date_link['Headline']
 
     if len(headlines) == 0:
         ti.xcom_push(key = 'no articles', value = True)
         return 
-    
+    ti.xcom_push(key = 'no articles', value = False)
     scores = []
     for headline in headlines:
         score = sid.polarity_scores(headline)['compound']
@@ -129,39 +131,38 @@ def financialnews_transform(ti):
     ti.xcom_push(key = 'scores', value = scores)
 
 def financialnews_load(ti):
-    if ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsExtraction']):
+    no_articles = ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsTransform'])[0]
+    
+    if no_articles:
         print('No articles for the day')
         return 
-    headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtraction'])[0]
-    scores = ti.xcom_pull(key='scores', task_ids = ['financialNewsTransformation'])[0]
+
+    headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtract'])[0]
+    scores = ti.xcom_pull(key='scores', task_ids = ['financialNewsTransform'])[0]
+    scores = [float(x) for x in scores]
     headline_date_link['Sentiment'].extend(scores)
     df = pd.DataFrame(headline_date_link)
 
-    print(df)
-    print(headline_date_link)
+    df['Date'] = pd.to_datetime(df['Date'])
     
-    # credentials_path = 'C:/Users/hewtu/Documents/GitHub/SGXStockDataPipeline/key.json'
-    # os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 
-    # client = bigquery.Client()
-    # table_id = "bustling-brand-344211.IS3107Project.News Sentiment"  
+    client = bigquery.Client()
+    table_id = "bustling-brand-344211.Reference.Financial news"  
 
-    # job_config = bigquery.LoadJobConfig(schema=[
-    #     bigquery.SchemaField("Headline", "STRING"),
-    #     bigquery.SchemaField("Date", "TIMESTAMP"),
-    #     bigquery.SchemaField("URL", "STRING"),
-    #     bigquery.SchemaField("Sentiment", "FLOAT"),
-    # ])
+    job_config = bigquery.LoadJobConfig(schema=[
+        bigquery.SchemaField("Headline", "STRING"),
+        bigquery.SchemaField("Date", "TIMESTAMP"),
+        bigquery.SchemaField("URL", "STRING"),
+        bigquery.SchemaField("Sentiment", "FLOAT"),
+    ])
 
-    # job = client.load_table_from_dataframe(
-    #     df, table_id, job_config=job_config
-    # )
+    job = client.load_table_from_dataframe(
+        df, table_id, job_config=job_config
+    )
 
-    # job.result()
+    job.result()
 
-    # table = client.get_table(table_id)  # Make an API request.
-    # print(
-    #     "Loaded {} rows and {} columns to {}".format(
-    #         table.num_rows, len(table.schema), table_id
-    #     )
-    # )
+    print('Successfully loaded news headlines')
+    

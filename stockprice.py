@@ -2,7 +2,6 @@ from google.cloud import bigquery
 import pandas as pd
 import yfinance as yf
 import os
-import numpy as np
 
 # Derived Columns Functions - Transformations
 '''
@@ -84,25 +83,28 @@ def getBacklog():
     
 
 def stockprice_extract(ti):
-    # df = pd.read_csv('STI_Component.csv')
-    df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtraction'])[0]
+    df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
     df = pd.DataFrame(eval(df))
     tickers = df['Ticker'].tolist()
     stock = df['Company name'].tolist()
+
     ohlcv_daily = {}
     i = 0
+
     for ticker in tickers:
         prices = yf.download(ticker, period = '5d').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
         prices = prices.reset_index()
+
         prices.insert(loc = 1, column = 'Ticker', value = ticker)
         prices.insert(loc = 1, column = 'Stock', value = stock[i])
         prices = prices.rename({'Adj Close': 'Adj_Close'}, axis=1)
+
         i += 1
         data = pd.DataFrame(prices)
         ohlcv_daily[ticker] = data.to_json(orient='records')
+
     ti.xcom_push(key='ohlcv', value = ohlcv_daily)
-    return ohlcv_daily
 
 def stockprice_transform(ohlcv_daily):
     return ohlcv_daily
@@ -111,34 +113,33 @@ def stockprice_load(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     for k,v in ohlcv_daily.items():
         ohlcv_daily[k] = pd.DataFrame(eval(v))
-    print(ohlcv_daily)
     
-    # credentials_path = 'key.json'
-    # os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
-    # client = bigquery.Client()
-    # table_id = "bustling-brand-344211.Market_Staging.StockPrice_Staging"
-    # for key, value in ohlcv_daily.items():
-    #     if not (value.empty):
-    #         job = client.load_table_from_dataframe(value, table_id)
-    #         job.result()
-    # query = """
-    # INSERT INTO `bustling-brand-344211.Market.StockPrice`
-    # SELECT *
-    # FROM (SELECT *, AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS MA_5day,
-    # CASE
-    # WHEN ((Close - AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW)) > 0.1) or (AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) - Close) > 0.1 THEN 'Neutral'
-    # WHEN Close > AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) THEN 'Buy'
-    # WHEN Close < AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) THEN 'Sell'
-    # else 'Neutral'
-    # END AS Signal,
-    # FROM
-    # `bustling-brand-344211.Market_Staging.StockPrice_Staging` as p
-    # ) T
-    # where CAST(DATE as Date) = CURRENT_DATE()
-    # """
-    # query_job = client.query(query)
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    client = bigquery.Client()
+    table_id = "bustling-brand-344211.Market_Staging.StockPrice_Staging"
+    for key, value in ohlcv_daily.items():
+        if not (value.empty):
+            job = client.load_table_from_dataframe(value, table_id)
+            job.result()
+    query = """
+    INSERT INTO `bustling-brand-344211.Market.StockPrice`
+    SELECT *
+    FROM (SELECT *, AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) AS MA_5day,
+    CASE
+    WHEN ((Close - AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW)) > 0.1) or (AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) - Close) > 0.1 THEN 'Neutral'
+    WHEN Close > AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) THEN 'Buy'
+    WHEN Close < AVG(CAST(Close AS float64)) OVER (PARTITION BY p.Ticker ORDER BY Date ROWS BETWEEN 4 PRECEDING AND CURRENT ROW) THEN 'Sell'
+    else 'Neutral'
+    END AS Signal,
+    FROM
+    `bustling-brand-344211.Market_Staging.StockPrice_Staging` as p
+    ) T
+    where CAST(DATE as Date) = CURRENT_DATE()
+    """
+    query_job = client.query(query)
 
-    print('loaded into bigquery')
+    print('Successfully loaded stock prices')
 
 #code to run
 # stockprice_load(stockprice_transform(stockprice_extract()))

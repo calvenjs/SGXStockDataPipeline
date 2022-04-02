@@ -1,7 +1,4 @@
 import pandas as pd
-import yfinance as yf
-from google.cloud import bigquery
-import os
 import requests
 
 def STIextraction(ti):
@@ -11,9 +8,11 @@ def STIextraction(ti):
     df = payload[0]
     df = df[['Symbol', 'Company name']]
     df = df.rename({'Symbol': "Ticker"}, axis = 1)
+
     df.to_csv("STI_components.csv", index=False)
     df = df.to_json(orient='records')
     ti.xcom_push(key='STIcomponents', value=df)
+        
 
 #code to run
 # STIextraction()

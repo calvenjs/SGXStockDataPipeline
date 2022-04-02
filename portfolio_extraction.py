@@ -3,28 +3,35 @@ import os
 from os.path import exists
 import pandas as pd
 
+def portfolio_extract(ti):
 
-credentials_path = 'C:/Users/gratz/OneDrive/Desktop/SGXStockDataPipeline/key.json'
-
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
-
-def extract():
     if exists('portfolio.csv'):
         df = pd.read_csv("portfolio.csv")
-    return df
+        df = df.to_json(orient='records')
 
+    ti.xcom_push(key='df',value=df)
 
-def transform(df):
+def portfolio_transform(ti):
+    df = ti.xcom_pull(key='df', task_ids = ['portfolioExtract'])[0]
+    df = pd.DataFrame(eval(df))
+
     df['Cost'] = df['Avg_Price'] * df['Share']
-    return df
 
-def load(df):
+    df = df.to_json(orient='records')
+    ti.xcom_push(key='df',value=df)
+
+def portfolio_load(ti):
+    df = ti.xcom_pull(key='df', task_ids = ['portfolioTransform'])[0]
+    df = pd.DataFrame(eval(df))
+
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
     table_id = "bustling-brand-344211.Accounting_Staging.Position_Staging"
+
     client.delete_table(table_id, not_found_ok=True)
     job = client.load_table_from_dataframe(df, table_id)
+
     job.result()
     query = """
     INSERT INTO `bustling-brand-344211.Accounting.Position`
@@ -35,5 +42,7 @@ def load(df):
         where CAST(s.DATE as Date) = CURRENT_DATE()
     """
     query_job = client.query(query)
+    print('Successfully loaded portfolio holdings')
+    
 #Code to run
-load(transform(extract()))
+# load(transform(extract()))

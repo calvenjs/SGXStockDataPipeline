@@ -2,19 +2,9 @@ from datetime import timedelta, datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-from financialnews import financialnews_extract
-from financialnews import financialnews_transform
-from financialnews import financialnews_load
-
-# from portfolio_extraction import extract
-# from portfolio_extraction import transform
-# from portfolio_extraction import load
-
+from financialnews import financialnews_extract, financialnews_transform, financialnews_load
 from STI_components import STIextraction
-
-from stockprice import stockprice_extract
-from stockprice import stockprice_transform
-from stockprice import stockprice_load
+from stockprice import stockprice_extract, stockprice_transform, stockprice_load
 
 with DAG(
     'Daily_SGX_Stock_Data_Pipeline',
@@ -33,19 +23,19 @@ with DAG(
 ) as dag:
 
     financialNewsExtract = PythonOperator(
-        task_id='financialNewsExtraction',
+        task_id='financialNewsExtract',
         python_callable=financialnews_extract,
         dag=dag,
     )
 
     financialNewsTransform = PythonOperator(
-        task_id='financialNewsTransformation',
+        task_id='financialNewsTransform',
         python_callable=financialnews_transform,
         dag=dag,
     )
 
     financialNewsLoad = PythonOperator(
-        task_id='financialNewsLoading',
+        task_id='financialNewsLoad',
         python_callable=financialnews_load,
         dag=dag,  
     )
@@ -69,7 +59,7 @@ with DAG(
     )
 
     STIExtraction = PythonOperator(
-        task_id='STIExtraction',
+        task_id='STIExtract',
         python_callable=STIextraction,
         dag=dag,  
     )

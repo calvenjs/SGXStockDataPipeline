@@ -2,18 +2,10 @@ from datetime import timedelta, datetime
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 
-# from portfolio_extraction import extract
-# from portfolio_extraction import transform
-# from portfolio_extraction import load
-
 from STI_components import STIextraction
-
-from dividend import dividend_extract
-from dividend import dividend_load
-
-from financials import financials_extract
-from financials import financials_transform
-from financials import financials_load
+from dividend import dividend_extract, dividend_load
+from financials import financials_extract,financials_transform, financials_load
+from portfolio_extraction import portfolio_extract, portfolio_transform, portfolio_load
 
 
 with DAG(
@@ -39,7 +31,7 @@ with DAG(
     )
 
     financialsTransform = PythonOperator(
-        task_id='financialsDownload',
+        task_id='financialsTransform',
         python_callable=financials_transform,
         dag=dag,  
     )
@@ -51,7 +43,7 @@ with DAG(
     )
 
     STIExtraction = PythonOperator(
-        task_id='STIExtraction',
+        task_id='STIExtract',
         python_callable=STIextraction,
         dag=dag,  
     )
@@ -68,6 +60,23 @@ with DAG(
         dag=dag,  
     )
 
+    portfolioExtract = PythonOperator(
+        task_id='portfolioExtract',
+        python_callable=portfolio_extract,
+        dag=dag,  
+    )
+    portfolioTransform = PythonOperator(
+        task_id='portfolioTransform',
+        python_callable=portfolio_transform,
+        dag=dag,  
+    )
+    portfolioLoad = PythonOperator(
+        task_id='portfolioLoad',
+        python_callable=portfolio_load,
+        dag=dag,  
+    )
+
     # monthly
     STIExtraction >> financialsExtract >> financialsTransform >> financialsLoad
     STIExtraction >> dividendExtract >> dividendLoad
+    portfolioExtract >> portfolioTransform >> portfolioLoad
