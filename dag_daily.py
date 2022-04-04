@@ -5,6 +5,7 @@ from airflow.operators.python import PythonOperator
 from financialnews import financialnews_extract, financialnews_transform, financialnews_load
 from STI_components import STIextraction
 from stockprice import stockprice_extract, stockprice_transform, stockprice_load
+from portfolio import portfolio_extract, portfolio_transform, portfolio_load
 
 with DAG(
     'Daily_SGX_Stock_Data_Pipeline',
@@ -64,6 +65,23 @@ with DAG(
         dag=dag,  
     )
 
+    portfolioExtract = PythonOperator(
+        task_id='portfolioExtract',
+        python_callable=portfolio_extract,
+        dag=dag,  
+    )
+    portfolioTransform = PythonOperator(
+        task_id='portfolioTransform',
+        python_callable=portfolio_transform,
+        dag=dag,  
+    )
+    portfolioLoad = PythonOperator(
+        task_id='portfolioLoad',
+        python_callable=portfolio_load,
+        dag=dag,  
+    )
+
     # daily 
+    portfolioExtract >> portfolioTransform >> portfolioLoad
     financialNewsExtract >> financialNewsTransform >> financialNewsLoad
     STIExtraction >> stockpriceExtract >> stockpriceLoad

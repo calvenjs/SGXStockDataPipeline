@@ -5,7 +5,6 @@ from airflow.operators.python import PythonOperator
 from STI_components import STIextraction
 from dividend import dividend_extract, dividend_load
 from financials import financials_extract,financials_transform, financials_load
-from portfolio_extraction import portfolio_extract, portfolio_transform, portfolio_load
 
 
 with DAG(
@@ -60,23 +59,6 @@ with DAG(
         dag=dag,  
     )
 
-    portfolioExtract = PythonOperator(
-        task_id='portfolioExtract',
-        python_callable=portfolio_extract,
-        dag=dag,  
-    )
-    portfolioTransform = PythonOperator(
-        task_id='portfolioTransform',
-        python_callable=portfolio_transform,
-        dag=dag,  
-    )
-    portfolioLoad = PythonOperator(
-        task_id='portfolioLoad',
-        python_callable=portfolio_load,
-        dag=dag,  
-    )
-
     # monthly
     STIExtraction >> financialsExtract >> financialsTransform >> financialsLoad
     STIExtraction >> dividendExtract >> dividendLoad
-    portfolioExtract >> portfolioTransform >> portfolioLoad

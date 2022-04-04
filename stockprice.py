@@ -109,6 +109,7 @@ def stockprice_extract(ti):
 def stockprice_transform(ohlcv_daily):
     return ohlcv_daily
 
+# takes around 3min to run
 def stockprice_load(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     for k,v in ohlcv_daily.items():
