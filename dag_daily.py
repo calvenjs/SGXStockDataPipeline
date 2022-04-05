@@ -4,6 +4,9 @@ from airflow.operators.python import PythonOperator
 
 from financialnews import financialnews_extract, financialnews_transform, financialnews_load
 from STI_components import STIextraction
+
+from stockprice_raw import stockprice_raw_extract, stockprice_raw_load
+
 from stockprice import stockprice_extract, stockprice_transform, stockprice_load
 from portfolio import portfolio_extract, portfolio_transform, portfolio_load
 
@@ -85,3 +88,4 @@ with DAG(
     portfolioExtract >> portfolioTransform >> portfolioLoad
     financialNewsExtract >> financialNewsTransform >> financialNewsLoad
     STIExtraction >> stockpriceExtract >> stockpriceLoad
+    

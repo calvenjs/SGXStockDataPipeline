@@ -43,6 +43,4 @@ def portfolio_load(ti):
     """
     query_job = client.query(query)
     print('Successfully loaded portfolio holdings')
-    
-#Code to run
-# load(transform(extract()))
+

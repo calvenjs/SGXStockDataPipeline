@@ -3,45 +3,6 @@ import pandas as pd
 import yfinance as yf
 import os
 
-# Derived Columns Functions - Transformations
-'''
-def MACD(DF, slow, fast, smooth):
-    exp1 = DF["Close"].ewm(span = fast, adjust = False).mean()
-    exp2 = DF["Close"].ewm(span = slow, adjust = False).mean()
-    macd = exp1-exp2
-    signal = macd.ewm(span = smooth, adjust = False).mean()
-    DF["MACD"] = macd
-    DF["MACD_SIG"] = signal
-    return (DF["MACD"],DF["MACD_SIG"])
-
-def OBV(DF):
-    df = DF.copy()
-    """function to calculate On Balance Volume"""
-    df['daily_ret'] = df['Close'].pct_change()
-    df['direction'] = np.where(df['daily_ret']>=0,1,-1)
-    df['direction'][0] = 0
-    df['vol_adj'] = df['Volume'] * df['direction']
-    df['obv'] = df['vol_adj'].cumsum()
-    return df['obv']
-
-def trade_signal(df,i, ticker):
-    "function to generate signal"
-    if df[ticker]['OBV'][i] > df[ticker]['OBV_EMA'][i] and \
-        df[ticker]['MACD'][i] > df[ticker]['MACD_SIG'][i]:
-            df[ticker]['SIGNAL'][i] = "STRONG BUY"
-    elif df[ticker]['OBV'][i] > df[ticker]['OBV_EMA'][i] or \
-        df[ticker]['MACD'][i] > df[ticker]['MACD_SIG'][i]:
-            df[ticker]['SIGNAL'][i] = "BUY"
-    elif df[ticker]['OBV'][i] < df[ticker]['OBV_EMA'][i] and \
-        df[ticker]['MACD'][i] < df[ticker]['MACD_SIG'][i]:
-            df[ticker]['SIGNAL'][i] = "STRONG SELL"
-    elif df[ticker]['OBV'][i] < df[ticker]['OBV_EMA'][i] or \
-        df[ticker]['MACD'][i] < df[ticker]['MACD_SIG'][i]:
-            df[ticker]['SIGNAL'][i] = "SELL"
-    else:
-        df[ticker]['SIGNAL'][i] = 'NEUTRAL'
-'''
-
 def getBacklog():
     credentials_path = 'C:/Users/gratz/OneDrive/Desktop/SGXStockDataPipeline/key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
@@ -81,16 +42,14 @@ def getBacklog():
             job = client.load_table_from_dataframe(value, table_id)
             job.result()
     
-
+#Pipeline for Portfolio Manager
 def stockprice_extract(ti):
     df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
     df = pd.DataFrame(eval(df))
     tickers = df['Ticker'].tolist()
     stock = df['Company name'].tolist()
-
     ohlcv_daily = {}
     i = 0
-
     for ticker in tickers:
         prices = yf.download(ticker, period = '5d').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
@@ -106,11 +65,7 @@ def stockprice_extract(ti):
 
     ti.xcom_push(key='ohlcv', value = ohlcv_daily)
 
-def stockprice_transform(ohlcv_daily):
-    return ohlcv_daily
-
-# takes around 3min to run
-def stockprice_load(ti):
+def stockprice_transform(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     for k,v in ohlcv_daily.items():
         ohlcv_daily[k] = pd.DataFrame(eval(v))
@@ -123,6 +78,13 @@ def stockprice_load(ti):
         if not (value.empty):
             job = client.load_table_from_dataframe(value, table_id)
             job.result()
+
+# takes around 3min to run
+def stockprice_load(ti): 
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    client = bigquery.Client()
+    table_id = "bustling-brand-344211.Market_Staging.StockPrice_Staging"
     query = """
     INSERT INTO `bustling-brand-344211.Market.StockPrice`
     SELECT *
@@ -142,8 +104,7 @@ def stockprice_load(ti):
 
     print('Successfully loaded stock prices')
 
-#code to run
-# stockprice_load(stockprice_transform(stockprice_extract()))
+
 
 
 
