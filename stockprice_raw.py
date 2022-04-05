@@ -27,19 +27,32 @@ def stockprice_raw_extract(ti):
 
 
 def stockprice_raw_load(ti):
-    ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
+    ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceRawExtract'])[0]
     for k,v in ohlcv_daily.items():
         ohlcv_daily[k] = pd.DataFrame(eval(v))
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.Market_Raw.StockPrice_Raw"
+    table_id = "bustling-brand-344211.Market_Raw.stockprice_raw"
+
+    query = """
+    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Market_Raw.stockprice_raw
+    (
+        Date    TIMESTAMP
+        Stock   STRING
+        Ticker  STRING
+        Open    FLOAT
+        High    FLOAT
+        Low     FLOAT
+        Close   FLOAT
+        Adj_Close   FLOAT
+        Volume  INTEGER
+    );
+    """
+
+    query_job = client.query(query)
+
     for key, value in ohlcv_daily.items():
         if not (value.empty):
             job = client.load_table_from_dataframe(value, table_id)
             job.result()
-
-
-
-
-

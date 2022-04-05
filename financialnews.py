@@ -122,9 +122,10 @@ def financialnews_extract(ti):
 
         # obtaining yesterday's date
         yesterday = datetime.today() - timedelta(1)
+        # yesterday = datetime(2022, 4, 1)  # for testing
 
         # if article date is the same as yesterday's date, 
-        if article_date.date() == yesterday.date():
+        if article_date.date() == yesterday.date(): 
 
             # extract headline and URL of the article, and add them to the dictionary defined earlier
             try:
@@ -171,7 +172,7 @@ def financialnews_transform(ti):
     ti.xcom_push(key = 'scores', value = scores)
 
 
-def financialnews_load(ti):
+def financialnews_staging(ti):
 
     # check if there are articles extracted for the day 
     no_articles = ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsTransform'])[0]
@@ -200,7 +201,7 @@ def financialnews_load(ti):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.Reference.Financial news"  
+    table_id = "bustling-brand-344211.Reference_Staging.Financial news staging"  
 
     # defining the bigquery table schema
     job_config = bigquery.LoadJobConfig(schema=[
@@ -216,6 +217,32 @@ def financialnews_load(ti):
     )
 
     job.result()
+
+    print('Successfully loaded news headlines')
+
+
+def financialnews_load():    
+    # setting up credentials for Google BigQuery
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+
+    client = bigquery.Client()
+    table_id = "bustling-brand-344211.Reference.Financial news"  
+
+    query = """
+
+    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Reference_Staging.Financial news staging
+    (
+    Headline  STRING,
+    Date  TIMESTAMP,
+    URL  STRING,
+    Sentiment  FLOAT,
+    );
+
+    INSERT INTO `bustling-brand-344211.Reference.Financial news`
+    SELECT DISTINCT * FROM  `bustling-brand-344211.Reference_Staging.Financial news staging` 
+    """
+    query_job = client.query(query)
 
     print('Successfully loaded news headlines')
     

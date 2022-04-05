@@ -65,7 +65,7 @@ def stockprice_extract(ti):
 
     ti.xcom_push(key='ohlcv', value = ohlcv_daily)
 
-def stockprice_transform(ti):
+def stockprice_staging(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     for k,v in ohlcv_daily.items():
         ohlcv_daily[k] = pd.DataFrame(eval(v))
@@ -80,7 +80,7 @@ def stockprice_transform(ti):
             job.result()
 
 # takes around 3min to run
-def stockprice_load(ti): 
+def stockprice_load(): 
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()

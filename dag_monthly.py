@@ -3,8 +3,8 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from STI_components import STIextraction
-from dividend import dividend_extract, dividend_load
-from financials import financials_extract,financials_transform, financials_load
+from dividend import dividend_extract, dividend_staging, dividend_load
+from financials import financials_extract,financials_transform, financials_staging, financials_load
 
 
 with DAG(
@@ -23,6 +23,12 @@ with DAG(
     start_date= datetime(2022, 3, 31),
 ) as dag:
 
+    STIExtraction = PythonOperator(
+        task_id='STIExtract',
+        python_callable=STIextraction,
+        dag=dag,  
+    )
+
     financialsExtract = PythonOperator(
         task_id='financialsExtract',
         python_callable=financials_extract,
@@ -35,21 +41,29 @@ with DAG(
         dag=dag,  
     )
 
+    financialsStaging = PythonOperator(
+        task_id='financialsStaging',
+        python_callable=financials_staging,
+        dag=dag,  
+    )
+
     financialsLoad = PythonOperator(
         task_id='financialsLoad',
         python_callable=financials_load,
         dag=dag,  
     )
 
-    STIExtraction = PythonOperator(
-        task_id='STIExtract',
-        python_callable=STIextraction,
-        dag=dag,  
-    )
+    #####
 
     dividendExtract = PythonOperator(
         task_id='dividendExtract',
         python_callable=dividend_extract,
+        dag=dag,  
+    )
+
+    dividendStaging = PythonOperator(
+        task_id='dividendStaging',
+        python_callable=dividend_staging,
         dag=dag,  
     )
 
@@ -60,5 +74,5 @@ with DAG(
     )
 
     # monthly
-    STIExtraction >> financialsExtract >> financialsTransform >> financialsLoad
-    STIExtraction >> dividendExtract >> dividendLoad
+    STIExtraction >> financialsExtract >> financialsTransform >> financialsStaging >> financialsLoad
+    STIExtraction >> dividendExtract >> dividendStaging >> dividendLoad

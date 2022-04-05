@@ -30,7 +30,7 @@ def dividend_extract(ti):
     ti.xcom_push(key='dividend_quarterly', value=dividend_quarterly)
 
 
-def dividend_transform(ti):
+def dividend_staging(ti):
     df = ti.xcom_pull(key='dividend_quarterly', task_ids = ['dividendExtract'])[0]
     df = pd.DataFrame(eval(df))
     credentials_path = 'key.json'
@@ -41,12 +41,12 @@ def dividend_transform(ti):
     job.result()
 
 
-def dividend_load(ti):
+def dividend_load():
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
     table_id = "bustling-brand-344211.Market_Staging.Dividend_Staging"
-    job = client.load_table_from_dataframe(df, table_id)
+    # job = client.load_table_from_dataframe(df, table_id)
     query = """
     INSERT INTO `bustling-brand-344211.Market.Dividend`
     SELECT DISTINCT * FROM  `bustling-brand-344211.Market_Staging.Dividend_Staging` 

@@ -9,6 +9,8 @@ def financials_extract(ti):
     df = pd.DataFrame(eval(df))
 
     STI_companies = df['Ticker'].tolist()
+    STI_companies = STI_companies[:3]
+
 
     company_info = []
 
@@ -46,7 +48,7 @@ def financials_transform(ti):
     df = df.to_json(orient='records')
     ti.xcom_push(key="processed_user_info", value=df)
 
-def financials_load(ti):
+def financials_staging(ti):
     results = ti.xcom_pull(task_ids=["financialsTransform"], key="processed_user_info")
     df = pd.DataFrame(eval(results[0]))
 
@@ -54,7 +56,25 @@ def financials_load(ti):
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.Market.Financials"
+    table_id = "bustling-brand-344211.Market_Staging.Financials_Staging"
+
+    query = """
+
+    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Market_Staging.Financials_Staging
+    (
+        Company_Name    STRING
+        Ticker  STRING
+        Gross_Profits   FLOAT
+        Total_Debt  FLOAT
+        Total_Cashflow  FLOAT
+        Total_Revenue   FLOAT
+        Net_Income  FLOAT
+        Return_On_Equity    FLOAT
+        Book_per_Share  FLOAT
+    );
+
+    """
+    query_job = client.query(query)
 
     job_config = bigquery.LoadJobConfig(
         schema=[
@@ -78,3 +98,17 @@ def financials_load(ti):
     load_job.result()  # Waits for the job to complete.
 
     print('Successfully loaded company financials')
+
+
+def financials_load():
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    client = bigquery.Client()
+    table_id = "bustling-brand-344211.Market.Financials"
+
+    query = """
+    INSERT INTO `bustling-brand-344211.Market.Financials`
+    SELECT DISTINCT * FROM  `bustling-brand-344211.Market_Staging.Financials_Staging` 
+    """
+
+    query_job = client.query(query)

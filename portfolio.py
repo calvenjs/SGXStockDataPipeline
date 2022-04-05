@@ -20,7 +20,7 @@ def portfolio_transform(ti):
     df = df.to_json(orient='records')
     ti.xcom_push(key='df',value=df)
 
-def portfolio_load(ti):
+def portfolio_staging(ti):
     df = ti.xcom_pull(key='df', task_ids = ['portfolioTransform'])[0]
     df = pd.DataFrame(eval(df))
 
@@ -33,6 +33,12 @@ def portfolio_load(ti):
     job = client.load_table_from_dataframe(df, table_id)
 
     job.result()
+
+def portfolio_load():
+    credentials_path = 'key.json'
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
+    client = bigquery.Client()
+
     query = """
     INSERT INTO `bustling-brand-344211.Accounting.Position`
     SELECT s.date, p.Ticker, s.Stock, p.Avg_Price,P.share, P.cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return
