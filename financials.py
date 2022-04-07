@@ -9,7 +9,7 @@ def financials_extract(ti):
     df = pd.DataFrame(eval(df))
 
     STI_companies = df['Ticker'].tolist()
-    STI_companies = STI_companies[:3]
+    STI_companies = STI_companies
 
 
     company_info = []

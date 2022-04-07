@@ -8,17 +8,29 @@ from stockprice_raw import stockprice_raw_extract, stockprice_raw_load
 from stockprice import stockprice_extract, stockprice_staging, stockprice_load
 from portfolio import portfolio_extract, portfolio_staging, portfolio_transform, portfolio_load
 
+import smtplib
+from keys import EMAIL_PASSWORD
+
+
+def send_email():
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login('is3107group32@gmail.com',EMAIL_PASSWORD)
+    server.sendmail('is3107group32@gmail.com','is3107group32@gmail.com','The daily pipeline has been executed successfully.')
+
+
 with DAG(
     'Daily_SGX_Stock_Data_Pipeline',
     default_args = {
         'owner': 'airflow',
         'depends_on_past': False,
         'start_date': datetime(2022, 3, 11),
-        'email': [''],
-        'email_on_failure': False,
-        'email_on_retry': False,
-        'retries': 0,
-        'retry_delay': timedelta(minutes=5)
+        'email': ['is3107group32@gmail.com'],
+        'email_on_failure': True,
+        'email_on_retry': True,
+        'retries': 1,
+        'retry_delay': timedelta(minutes=5),
+        # 'on_success_callback': send_email,
     },
     schedule_interval= '@daily',
     start_date= datetime(2022, 3, 31),
@@ -27,6 +39,12 @@ with DAG(
     STIExtraction = PythonOperator(
         task_id='STIExtract',
         python_callable=STIextraction,
+        dag=dag,  
+    )
+
+    sendEmail = PythonOperator(
+        task_id='sendEmail',
+        python_callable=send_email,
         dag=dag,  
     )
 
@@ -118,12 +136,12 @@ with DAG(
         dag=dag,  
     )
 
-    STIExtraction >> stockpriceRawExtract >> stockpriceRawLoad   # DOESNT WORK
+    STIExtraction >> stockpriceRawExtract >> stockpriceRawLoad >> sendEmail # DOESNT WORK
 
 
-    financialNewsExtract >> financialNewsTransform >> financialNewsStaging >> financialNewsLoad  # works
-    STIExtraction >> stockpriceExtract >> stockpriceStaging >> stockpriceLoad  # works
-    portfolioExtract >> portfolioTransform >> portfolioStaging >> portfolioLoad  # works
+    financialNewsExtract >> financialNewsTransform >> financialNewsStaging >> financialNewsLoad >> sendEmail  # works
+    STIExtraction >> stockpriceExtract >> stockpriceStaging >> stockpriceLoad >> sendEmail  # works
+    portfolioExtract >> portfolioTransform >> portfolioStaging >> portfolioLoad >> sendEmail  # works
 
 
     

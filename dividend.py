@@ -7,7 +7,7 @@ from datetime import datetime
 
 def dividend_extract(ti):
     startday = datetime(datetime.today().year, datetime.today().month, 1)
-    endday = startday +  relativedelta(months=3)
+    endday = startday + relativedelta(months=1)
     df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
     df = pd.DataFrame(eval(df))
     # df = pd.read_csv('STI_Component.csv')
@@ -21,7 +21,7 @@ def dividend_extract(ti):
             dividend = pd.DataFrame({'EX_Date':dividend.index, 'Dividends_Per_Share':dividend.values})
             
             #dividend = dividend[(dividend['EX_Date'] >= startday) & (dividend['EX_Date'] <= endday)]
-            dividend = dividend[(dividend['EX_Date'] >= "2022-01-01") & (dividend['EX_Date'] <= "2022-04-01")]  # might need to change this 
+            dividend = dividend[(dividend['EX_Date'] >= startday) & (dividend['EX_Date'] <= endday)]  
             dividend.insert(loc = 1, column = 'Ticker', value = ticker)
             dividend.insert(loc = 1, column = 'Stock', value = stock[i])
             dividend_quarterly  =  dividend_quarterly.append(dividend, ignore_index=True)
@@ -33,6 +33,10 @@ def dividend_extract(ti):
 def dividend_staging(ti):
     df = ti.xcom_pull(key='dividend_quarterly', task_ids = ['dividendExtract'])[0]
     df = pd.DataFrame(eval(df))
+    print(df)
+    if len(df) == 0:
+        print('no dividend entries')
+        return
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()

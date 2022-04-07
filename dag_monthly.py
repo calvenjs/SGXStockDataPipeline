@@ -6,6 +6,14 @@ from STI_components import STIextraction
 from dividend import dividend_extract, dividend_staging, dividend_load
 from financials import financials_extract,financials_transform, financials_staging, financials_load
 
+import smtplib
+from keys import EMAIL_PASSWORD
+
+def send_email():
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.starttls()
+    server.login('is3107group32@gmail.com',EMAIL_PASSWORD)
+    server.sendmail('is3107group32@gmail.com','is3107group32@gmail.com','The monthly pipeline has been executed successfully.')
 
 with DAG(
     'Monthly_SGX_Stock_Data_Pipeline',
@@ -13,11 +21,12 @@ with DAG(
         'owner': 'airflow',
         'depends_on_past': False,
         'start_date': datetime(2022, 3, 31),
-        'email': [''],
-        'email_on_failure': False,
-        'email_on_retry': False,
-        'retries': 0,
-        'retry_delay': timedelta(minutes=1)
+        'email': ['is3107group32@gmail.com'],
+        'email_on_failure': True,
+        'email_on_retry': True,
+        'retries': 1,
+        'retry_delay': timedelta(minutes=5),
+        # 'on_success_callback': send_email
     },
     schedule_interval= '@monthly',
     start_date= datetime(2022, 3, 31),
@@ -26,6 +35,12 @@ with DAG(
     STIExtraction = PythonOperator(
         task_id='STIExtract',
         python_callable=STIextraction,
+        dag=dag,  
+    )
+
+    sendEmail = PythonOperator(
+        task_id='sendEmail',
+        python_callable=send_email,
         dag=dag,  
     )
 
@@ -74,5 +89,5 @@ with DAG(
     )
 
     # monthly
-    STIExtraction >> financialsExtract >> financialsTransform >> financialsStaging >> financialsLoad
-    STIExtraction >> dividendExtract >> dividendStaging >> dividendLoad
+    STIExtraction >> financialsExtract >> financialsTransform >> financialsStaging >> financialsLoad >> sendEmail
+    STIExtraction >> dividendExtract >> dividendStaging >> dividendLoad >> sendEmail
