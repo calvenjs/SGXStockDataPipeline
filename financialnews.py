@@ -230,15 +230,6 @@ def financialnews_load():
     table_id = "bustling-brand-344211.Reference.Financial news"  
 
     query = """
-
-    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Reference_Staging.Financial news staging
-    (
-    Headline  STRING,
-    Date  TIMESTAMP,
-    URL  STRING,
-    Sentiment  FLOAT,
-    );
-
     INSERT INTO `bustling-brand-344211.Reference.Financial news`
     SELECT DISTINCT * FROM  `bustling-brand-344211.Reference_Staging.Financial news staging` 
     """
@@ -246,3 +237,13 @@ def financialnews_load():
 
     print('Successfully loaded news headlines')
     
+
+"""
+    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Reference_Staging.Financial news staging
+    (
+    Headline  STRING,
+    Date  TIMESTAMP,
+    URL  STRING,
+    Sentiment  FLOAT,
+    );
+"""

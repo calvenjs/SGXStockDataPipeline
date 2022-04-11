@@ -26,7 +26,6 @@ with DAG(
         'email_on_retry': True,
         'retries': 1,
         'retry_delay': timedelta(minutes=5),
-        # 'on_success_callback': send_email
     },
     schedule_interval= '@monthly',
     start_date= datetime(2022, 3, 31),

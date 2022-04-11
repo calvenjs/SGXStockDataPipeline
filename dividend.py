@@ -20,7 +20,7 @@ def dividend_extract(ti):
         if len(dividend) > 0:
             dividend = pd.DataFrame({'EX_Date':dividend.index, 'Dividends_Per_Share':dividend.values})
             
-            #dividend = dividend[(dividend['EX_Date'] >= startday) & (dividend['EX_Date'] <= endday)]
+            # dividend = dividend[(dividend['EX_Date'] >= "2022-01-01") & (dividend['EX_Date'] <= "2022-04-01")] # for testing
             dividend = dividend[(dividend['EX_Date'] >= startday) & (dividend['EX_Date'] <= endday)]  
             dividend.insert(loc = 1, column = 'Ticker', value = ticker)
             dividend.insert(loc = 1, column = 'Stock', value = stock[i])

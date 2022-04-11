@@ -1,3 +1,4 @@
+import datetime
 import yfinance as yf
 import pandas as pd
 from google.cloud import bigquery
@@ -9,7 +10,7 @@ def financials_extract(ti):
     df = pd.DataFrame(eval(df))
 
     STI_companies = df['Ticker'].tolist()
-    STI_companies = STI_companies
+    # STI_companies = STI_companies[:3] # testing
 
 
     company_info = []
@@ -45,12 +46,14 @@ def financials_transform(ti):
         df = pd.concat([df, newRow], ignore_index=True)
 
     df = df.fillna(0)
+    df['Date'] = df['Company_Name'].apply(lambda x: datetime.datetime.now(datetime.timezone.utc))
     df = df.to_json(orient='records')
     ti.xcom_push(key="processed_user_info", value=df)
 
 def financials_staging(ti):
     results = ti.xcom_pull(task_ids=["financialsTransform"], key="processed_user_info")
     df = pd.DataFrame(eval(results[0]))
+    df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x)/1000))
 
     # Change the bigquery path and table name
     credentials_path = 'key.json'
@@ -71,6 +74,7 @@ def financials_staging(ti):
         Net_Income  FLOAT
         Return_On_Equity    FLOAT
         Book_per_Share  FLOAT
+        Date   TIMESTAMP
     );
 
     """
@@ -86,7 +90,8 @@ def financials_staging(ti):
             bigquery.SchemaField("Total_Revenue", "FLOAT"),
             bigquery.SchemaField("Net_Income", "FLOAT"),
             bigquery.SchemaField("Return_On_Equity", "FLOAT"),
-            bigquery.SchemaField("Book_per_Share", "FLOAT")
+            bigquery.SchemaField("Book_per_Share", "FLOAT"),
+            bigquery.SchemaField("Date", "TIMESTAMP"),
         ]
     )
     load_job = client.load_table_from_dataframe(

@@ -30,7 +30,6 @@ with DAG(
         'email_on_retry': True,
         'retries': 1,
         'retry_delay': timedelta(minutes=5),
-        # 'on_success_callback': send_email,
     },
     schedule_interval= '@daily',
     start_date= datetime(2022, 3, 31),
@@ -136,12 +135,13 @@ with DAG(
         dag=dag,  
     )
 
-    STIExtraction >> stockpriceRawExtract >> stockpriceRawLoad >> sendEmail # DOESNT WORK
 
+    
+    STIExtraction >> stockpriceRawExtract >> stockpriceRawLoad >> sendEmail 
+    STIExtraction >> stockpriceExtract >> stockpriceStaging >> stockpriceLoad >> sendEmail  
 
-    financialNewsExtract >> financialNewsTransform >> financialNewsStaging >> financialNewsLoad >> sendEmail  # works
-    STIExtraction >> stockpriceExtract >> stockpriceStaging >> stockpriceLoad >> sendEmail  # works
-    portfolioExtract >> portfolioTransform >> portfolioStaging >> portfolioLoad >> sendEmail  # works
+    financialNewsExtract >> financialNewsTransform >> financialNewsStaging >> financialNewsLoad >> sendEmail  
+    portfolioExtract >> portfolioTransform >> portfolioStaging >> portfolioLoad >> sendEmail  
 
 
     

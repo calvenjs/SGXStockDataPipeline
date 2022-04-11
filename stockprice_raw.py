@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 import os
 import numpy as np
+import datetime
 
 #Extract raw stock price for QD pipeline
 def stockprice_raw_extract(ti):
@@ -13,7 +14,7 @@ def stockprice_raw_extract(ti):
     ohlcv_daily = {}
     i = 0
     for ticker in tickers:
-        prices = yf.download(ticker, period = '5d').iloc[: , :6].dropna(axis=0, how='any')
+        prices = yf.download(ticker, period = '1d').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
         prices = prices.reset_index()
         prices.insert(loc = 1, column = 'Ticker', value = ticker)
@@ -29,7 +30,11 @@ def stockprice_raw_extract(ti):
 def stockprice_raw_load(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceRawExtract'])[0]
     for k,v in ohlcv_daily.items():
-        ohlcv_daily[k] = pd.DataFrame(eval(v))
+        df = pd.DataFrame(eval(v))
+        df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x) / 1000))
+        # print(df['Date'])
+        ohlcv_daily[k] = df
+
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
@@ -38,7 +43,7 @@ def stockprice_raw_load(ti):
     query = """
     CREATE TABLE IF NOT EXISTS bustling-brand-344211.Market_Raw.stockprice_raw
     (
-        Date    TIMESTAMP
+        Date    DATE
         Stock   STRING
         Ticker  STRING
         Open    FLOAT

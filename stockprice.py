@@ -1,3 +1,4 @@
+import datetime
 from google.cloud import bigquery
 import pandas as pd
 import yfinance as yf
@@ -68,7 +69,10 @@ def stockprice_extract(ti):
 def stockprice_staging(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     for k,v in ohlcv_daily.items():
-        ohlcv_daily[k] = pd.DataFrame(eval(v))
+        df = pd.DataFrame(eval(v))
+        df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x) / 1000))
+        print(df['Date'])
+        ohlcv_daily[k] = df
     
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path

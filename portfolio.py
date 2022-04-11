@@ -1,3 +1,4 @@
+import datetime
 from google.cloud import bigquery
 import os
 from os.path import exists
@@ -14,6 +15,8 @@ def portfolio_extract(ti):
 def portfolio_transform(ti):
     df = ti.xcom_pull(key='df', task_ids = ['portfolioExtract'])[0]
     df = pd.DataFrame(eval(df))
+    df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
+
 
     df['Cost'] = df['Avg_Price'] * df['Share']
 
@@ -23,6 +26,8 @@ def portfolio_transform(ti):
 def portfolio_staging(ti):
     df = ti.xcom_pull(key='df', task_ids = ['portfolioTransform'])[0]
     df = pd.DataFrame(eval(df))
+    df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
+    print(df['Date'])
 
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
