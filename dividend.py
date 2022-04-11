@@ -41,6 +41,7 @@ def dividend_staging(ti):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
     table_id = "bustling-brand-344211.Market_Staging.Dividend_Staging"
+    client.delete_table(table_id, not_found_ok=True)
     job = client.load_table_from_dataframe(df, table_id)
     job.result()
 

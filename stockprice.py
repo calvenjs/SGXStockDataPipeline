@@ -74,6 +74,7 @@ def stockprice_staging(ti):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
     table_id = "bustling-brand-344211.Market_Staging.StockPrice_Staging"
+    client.delete_table(table_id, not_found_ok=True)
     for key, value in ohlcv_daily.items():
         if not (value.empty):
             job = client.load_table_from_dataframe(value, table_id)
