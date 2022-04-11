@@ -40,6 +40,7 @@ def portfolio_load():
     client = bigquery.Client()
 
     query = """
+    delete `bustling-brand-344211.Accounting.Position` where True;
     INSERT INTO `bustling-brand-344211.Accounting.Position`
     SELECT s.date, p.Ticker, s.Stock, p.Avg_Price,P.share, P.cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return
         FROM
