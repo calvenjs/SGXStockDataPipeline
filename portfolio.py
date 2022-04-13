@@ -6,7 +6,7 @@ import pandas as pd
 import json
 
 def portfolio_extract(ti):
-
+    #If portfolio file exist, start ETL Process
     if exists('portfolio.csv'):
         df = pd.read_csv("portfolio.csv")
         df = df.to_json(orient='records')
@@ -18,7 +18,7 @@ def portfolio_transform(ti):
     df = pd.DataFrame(eval(df))
     df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
 
-
+    #Add Cost Column into DataFrame
     df['Cost'] = df['Avg_Price'] * df['Share']
 
     df = df.to_json(orient='records')
@@ -34,6 +34,8 @@ def portfolio_staging(ti):
     openfile=open('key.json')
     jsondata=json.load(openfile)
     openfile.close()
+    project_id = jsondata['project_id']
+    staging_table_id = project_id + ".Accounting_Staging.Position_Staging"
 
     #Setup BigQuery Connection
     credentials_path = 'key.json'
@@ -41,8 +43,6 @@ def portfolio_staging(ti):
     client = bigquery.Client()
 
     #Load Data to Staging
-    project_id = jsondata['project_id']
-    staging_table_id = project_id + ".Accounting_Staging.Position_Staging"
     job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
 
@@ -60,6 +60,8 @@ def portfolio_load():
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
+
+    #Load Data from Staging to Actual Data
     query = f"""
     Delete {actual_table_id} where True;
     INSERT INTO {actual_table_id}
