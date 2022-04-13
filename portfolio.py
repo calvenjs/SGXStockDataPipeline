@@ -69,7 +69,8 @@ def portfolio_load():
     FROM
     {staging_table_id} as p INNER JOIN
     {stock_tabie_id} as s on p.Ticker = s.Ticker
-    where CAST(s.DATE as Date) = CURRENT_DATE()
+    where CAST(s.DATE as Date) = CURRENT_DATE();
+    Delete {staging_table_id} where True;
     """
     query_job = client.query(query)
     print('Successfully loaded portfolio holdings')
