@@ -13,6 +13,8 @@ def financials_extract(ti):
 
     STI_companies = df['Ticker'].tolist()
     # STI_companies = STI_companies[:3] # testing
+
+
     company_info = []
 
     for i in range(len(STI_companies)):
@@ -58,23 +60,21 @@ def financials_staging(ti):
     df = pd.DataFrame(eval(results[0]))
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x)/1000))
 
-<<<<<<< Updated upstream
-    # Connect to staging area, create staging table if not exist
-    credentials_path = 'key.json'
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-=======
     #Get Project ID
     openfile=open('testkey.json')
     jsondata=json.load(openfile)
     openfile.close()
-
-    #Setup
-    credentials_path = 'testkey.json'
+    
+    #Connect to Bigquery
+    credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
->>>>>>> Stashed changes
     client = bigquery.Client()
 
+    #Load To staging
     staging_table_id = jsondata['project_id'] + ".Market_Staging.Financials_Staging"
+    job = client.load_table_from_dataframe(df, staging_table_id)
+    job.result()
+    
 
     job_config = bigquery.LoadJobConfig(
         schema=[
@@ -92,7 +92,7 @@ def financials_staging(ti):
     )
     load_job = client.load_table_from_dataframe(
         df,
-        staging_table_id,
+        table_id,
         job_config=job_config,
     )
 
@@ -100,34 +100,23 @@ def financials_staging(ti):
 
     print('Successfully loaded company financials')
 
-<<<<<<< Updated upstream
 # Load information in the staging table into the storage table
-=======
->>>>>>> Stashed changes
 def financials_load():
-    #Get Project ID
-    openfile=open('testkey.json')
-    jsondata=json.load(openfile)
-    openfile.close()
-    
-    project_id = jsondata['project_id']
-    staging_table_id = '`' + project_id + ".Market_Staging.Financials_Staging`"
-    actual_table_id = "`" + project_id + ".Market.Financials`"
-
-    #Setup Big Query
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     client = bigquery.Client()
-    
-    query = f"""
-    INSERT INTO {actual_table_id}
-    SELECT DISTINCT * FROM  {staging_table_id};
-    Delete {staging_table_id} where True;
-    """
-<<<<<<< Updated upstream
 
+    #get Project ID
+    openfile=open('key.json')
+    jsondata=json.load(openfile)
+    openfile.close()
+    staging_table_id = '`' + jsondata['project_id'] + ".Market_Staging.Financials_Staging`"
+    actual_table_id = "`" + jsondata['project_id'] + ".Market.Financials`"
+
+    query = f"""
+    INSERT INTO  {actual_table_id}
+    SELECT DISTINCT * FROM  {staging_table_id};
+    DELETE FROM {staging_table_id} where True
+    """
     query_job = client.query(query)
-=======
-    query_job = client.query(query)
-    print('Successfully loaded Financials Details')
->>>>>>> Stashed changes
+     print('Successfully loaded Financials details')

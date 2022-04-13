@@ -57,7 +57,7 @@ def dividend_staging(ti):
     client = bigquery.Client()
 
     #Load To staging
-    staging_table_id = project_id + ".Market_Staging.Dividend_Staging"
+    staging_table_id = jsondata['project_id'] + ".Market_Staging.Dividend_Staging"
     job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
 
