@@ -3,6 +3,7 @@ from google.cloud import bigquery
 import os
 from os.path import exists
 import pandas as pd
+import json
 
 def portfolio_extract(ti):
 
@@ -28,30 +29,45 @@ def portfolio_staging(ti):
     df = pd.DataFrame(eval(df))
     df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
     print(df['Date'])
+    
+    #Get Project ID
+    openfile=open('key.json')
+    jsondata=json.load(openfile)
+    openfile.close()
 
+    #Setup BigQuery Connection
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.Accounting_Staging.Position_Staging"
 
-    client.delete_table(table_id, not_found_ok=True)
-    job = client.load_table_from_dataframe(df, table_id)
-
+    #Load Data to Staging
+    project_id = jsondata['project_id']
+    staging_table_id = project_id + ".Accounting_Staging.Position_Staging"
+    job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
 
 def portfolio_load():
+    #Get Project ID
+    openfile=open('key.json')
+    jsondata=json.load(openfile)
+    openfile.close()
+    project_id = jsondata['project_id']
+    staging_table_id = '`' + project_id + ".Accounting_Staging.Position_Staging`"
+    actual_table_id = "`" + project_id + ".Accounting.Position`"
+    stock_tabie_id = "`" + project_id + ".Market.StockPrice`"
+
+    #Setup BigQuery Connection
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
-
-    query = """
-    delete `bustling-brand-344211.Accounting.Position` where True;
-    INSERT INTO `bustling-brand-344211.Accounting.Position`
-    SELECT s.date, p.Ticker, s.Stock, p.Avg_Price,P.share, P.cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return
-        FROM
-        `bustling-brand-344211.Accounting_Staging.Position_Staging` as p INNER JOIN
-        `bustling-brand-344211.Market.StockPrice` as s on p.Ticker = s.Ticker
-        where CAST(s.DATE as Date) = CURRENT_DATE()
+    query = f"""
+    Delete {actual_table_id} where True;
+    INSERT INTO {actual_table_id}
+    SELECT s.Date, p.Ticker, s.Stock, p.Avg_Price,P.Share, P.Cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return
+    FROM
+    {staging_table_id} as p INNER JOIN
+    {stock_tabie_id} as s on p.Ticker = s.Ticker
+    where CAST(s.DATE as Date) = CURRENT_DATE()
     """
     query_job = client.query(query)
     print('Successfully loaded portfolio holdings')

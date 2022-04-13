@@ -201,7 +201,13 @@ def financialnews_staging(ti):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 
     client = bigquery.Client()
-    table_id = "bustling-brand-344211.Reference_Staging.Financial news staging"  
+
+    #Get Project ID
+    openfile=open('key.json')
+    jsondata=json.load(openfile)
+    openfile.close()
+    project_id = jsondata['project_id']
+    staging_table_id = project_id + ".Reference_Staging.Financial news staging"
 
     # defining the bigquery table schema
     job_config = bigquery.LoadJobConfig(schema=[
@@ -213,37 +219,34 @@ def financialnews_staging(ti):
 
     # code to load dataframe into Google BigQuery 
     job = client.load_table_from_dataframe(
-        df, table_id, job_config=job_config
+        df, staging_table_id, job_config=job_config
     )
 
     job.result()
 
     print('Successfully loaded news headlines')
-
-
-def financialnews_load():    
+    
+def financialnews_load():
+    #Get Project ID
+    openfile=open('key.json')
+    jsondata=json.load(openfile)
+    openfile.close()
+    project_id = jsondata['project_id']
+    staging_table_id = '`' + project_id + ".Reference_Staging.Financial news staging`"
+    actual_table_id = "`" + project_id + ".Reference.Financial news`"
+    
     # setting up credentials for Google BigQuery
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
-
-    client = bigquery.Client()
-    table_id = "bustling-brand-344211.Reference.Financial news"  
+    client = bigquery.Client()  
 
     query = """
-    INSERT INTO `bustling-brand-344211.Reference.Financial news`
-    SELECT DISTINCT * FROM  `bustling-brand-344211.Reference_Staging.Financial news staging` 
+    INSERT INTO {actual_table_id}
+    SELECT DISTINCT * FROM  {staging_table_id};
+    Delete {staging_table_id} where True;
     """
     query_job = client.query(query)
 
     print('Successfully loaded news headlines')
     
 
-"""
-    CREATE TABLE IF NOT EXISTS bustling-brand-344211.Reference_Staging.Financial news staging
-    (
-    Headline  STRING,
-    Date  TIMESTAMP,
-    URL  STRING,
-    Sentiment  FLOAT,
-    );
-"""
