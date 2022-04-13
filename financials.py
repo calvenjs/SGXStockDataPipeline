@@ -70,7 +70,7 @@ def financials_staging(ti):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
 
-    #Load To staging
+    #Load To staging table
     staging_table_id = jsondata['project_id'] + ".Market_Staging.Financials_Staging"
     job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
@@ -113,6 +113,7 @@ def financials_load():
     staging_table_id = '`' + jsondata['project_id'] + ".Market_Staging.Financials_Staging`"
     actual_table_id = "`" + jsondata['project_id'] + ".Market.Financials`"
 
+    #Load Data from Staging table to Acutal Table
     query = f"""
     INSERT INTO  {actual_table_id}
     SELECT DISTINCT * FROM  {staging_table_id};

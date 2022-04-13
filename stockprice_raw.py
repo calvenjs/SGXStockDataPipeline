@@ -19,7 +19,6 @@ def stockprice_raw_extract(ti):
         prices = yf.download(ticker, period = '5d').iloc[: , :6].dropna(axis=0, how='any')
         prices = prices.loc[~prices.index.duplicated(keep='last')]
         prices = prices.reset_index()
-
         prices.insert(loc = 1, column = 'Ticker', value = ticker)
         prices.insert(loc = 1, column = 'Stock', value = stock[i])
         prices = prices.rename({'Adj Close': 'Adj_Close'}, axis=1)
@@ -39,14 +38,14 @@ def stockprice_raw_load(ti):
     openfile=open('key.json')
     jsondata=json.load(openfile)
     openfile.close()
+    project_id = jsondata['project_id']
+    table_id = project_id + ".Market_Raw.stockprice_raw"
 
     #Connect to Bigquery
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
 
-    #Load
-    project_id = jsondata['project_id']
-    table_id = project_id + ".Market_Raw.stockprice_raw"
+    #Load data to Bigquery
     job = client.load_table_from_dataframe(ohlcv_daily, table_id)
     job.result()

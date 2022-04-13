@@ -38,6 +38,8 @@ def stockprice_staging(ti):
     openfile=open('key.json')
     jsondata=json.load(openfile)
     openfile.close()
+    project_id = jsondata['project_id']
+    staging_table_id = project_id + ".Market_Staging.StockPrice_Staging"
 
     #Connect to Bigquery
     credentials_path = 'key.json'
@@ -45,12 +47,10 @@ def stockprice_staging(ti):
     client = bigquery.Client()
 
     #Load To staging
-    project_id = jsondata['project_id']
-    staging_table_id = project_id + ".Market_Staging.StockPrice_Staging"
     job = client.load_table_from_dataframe(ohlcv_daily, staging_table_id)
     job.result()
     
-# takes around 3min to run
+
 def stockprice_load():
     #Get Project ID
     openfile=open('testkey.json')
@@ -60,12 +60,12 @@ def stockprice_load():
     staging_table_id = '`' + project_id + ".Market_Staging.StockPrice_Staging`"
     actual_table_id = "`" + project_id + ".Market.StockPrice`"
     
-    #Setup
+    #Connect To Bigquery
     credentials_path = 'testkey.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
 
-    #Load Data from Staging to Acutal
+    #Load Data from Staging table to Acutal table
     query = f"""
     INSERT INTO {actual_table_id}
     SELECT *
