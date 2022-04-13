@@ -7,8 +7,8 @@ import json
 
 def portfolio_extract(ti):
     #If portfolio file exist, start ETL Process
-    if exists('portfolio.csv'):
-        df = pd.read_csv("portfolio.csv")
+    if exists('Portfolio.csv'):
+        df = pd.read_csv("Portfolio.csv")
         df = df.to_json(orient='records')
 
     ti.xcom_push(key='df',value=df)
