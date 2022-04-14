@@ -18,7 +18,7 @@ client = bigquery.Client()
 
 
 def setupDataset():
-    dataset = ["Accounting", "Accounting_Staging", "Market", "Market_Raw", "Market_Staging", "Reference", "Reference_Staging", "Market_Raw"]
+    dataset = ["Accounting", "Accounting_Staging", "Market", "Market_Raw", "Market_Staging", "Reference", "Reference_Staging"]
 
     for d in dataset:
         # Construct a full Dataset object to send to the API.
