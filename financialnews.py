@@ -241,7 +241,7 @@ def financialnews_load():
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()  
 
-    query = """
+    query = f"""
     INSERT INTO {actual_table_id}
     SELECT DISTINCT * FROM  {staging_table_id};
     Delete {staging_table_id} where True;

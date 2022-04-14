@@ -52,9 +52,9 @@ def portfolio_load():
     jsondata=json.load(openfile)
     openfile.close()
     project_id = jsondata['project_id']
-    staging_table_id = '`' + project_id + ".Accounting_Staging.Position_Staging`"
-    actual_table_id = "`" + project_id + ".Accounting.Position`"
-    stock_tabie_id = "`" + project_id + ".Market.StockPrice`"
+    staging_table_id = '' + project_id + ".Accounting_Staging.Position_Staging"
+    actual_table_id = "" + project_id + ".Accounting.Position"
+    stock_tabie_id = "" + project_id + ".Market.StockPrice"
 
     #Setup BigQuery Connection
     credentials_path = 'key.json'
