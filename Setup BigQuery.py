@@ -106,7 +106,7 @@ def setupTable():
             bigquery.SchemaField("URL", "STRING"),
             bigquery.SchemaField("Sentiment", "FLOAT"),
     ]
-    table = bigquery.Table(project_id + "." + "Reference_Staging.Financial news staging", schema=schema)
+    table = bigquery.Table(project_id + "." + "Reference.Financial news", schema=schema)
     table = client.create_table(table)  # Make an API request.
     print(
         "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
