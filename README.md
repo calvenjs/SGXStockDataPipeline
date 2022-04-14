@@ -15,6 +15,6 @@ The project will extract data from interal sources provided in a flat file and e
 - Language: Python
 
 ### Architecture
-
+![ezcv logo](https://raw.githubusercontent.com/calvenjs/SGXStockDataPipeline/tree/main/images/pipeline_architecture.JPG)
 
 ## Setup
