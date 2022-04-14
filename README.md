@@ -15,6 +15,6 @@ The project will extract data from interal sources provided in a flat file and e
 - Language: Python
 
 ### Architecture
-![image](SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
+![image](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
 
 ## Setup
