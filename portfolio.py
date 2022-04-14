@@ -65,7 +65,7 @@ def portfolio_load():
     query = f"""
     Delete {actual_table_id} where True;
     INSERT INTO {actual_table_id}
-    SELECT s.Date, p.Ticker, s.Stock, p.Avg_Price,P.Share, P.Cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return
+    SELECT s.Date, p.Ticker, s.Stock, p.Avg_Price, P.Share, P.Cost, p.Share * s.Close AS Value, (p.Share * s.Close) - p.Cost as Return, p.Type
     FROM
     {staging_table_id} as p INNER JOIN
     {stock_tabie_id} as s on p.Ticker = s.Ticker
