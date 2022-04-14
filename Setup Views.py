@@ -91,7 +91,7 @@ def setupViews():
     print(f"Created {view.table_type}: {str(view.reference)}")
 
     #Dividend
-    view_id = project_id + ".Views." + "LatestFinancials"
+    view_id = project_id + ".Views." + "Dividend"
     position_source_id = "`" + project_id + ".Accounting.Position`"
     dividend_source_id = "`" + project_id + ".Market.Dividend`"
     view = bigquery.Table(view_id)
@@ -107,6 +107,7 @@ def setupViews():
     print(f"Created {view.table_type}: {str(view.reference)}")
 
 
-    
+setupviewDataset()
+setupViews()
 
 

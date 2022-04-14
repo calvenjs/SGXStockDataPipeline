@@ -112,8 +112,8 @@ def setupTable():
         "Created table {}.{}.{}".format(table.project, table.dataset_id, table.table_id)
     )
 
-
-
+setupDataset()
+setupTable()
   
 
 
