@@ -15,6 +15,10 @@ The project will extract data from interal sources provided in a flat file and e
 - Language: Python
 
 ### Architecture
-![image](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
+![Pipeline](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
+
+
+### Airflow DAG
+![Airflow Dependency](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/airflow_dag.JPG)
 
 ## Setup
