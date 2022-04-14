@@ -3,13 +3,13 @@ import os
 import json
 
 #Get Project ID
-openfile=open('testkey.json')
+openfile=open('key.json')
 jsondata=json.load(openfile)
 openfile.close()
 project_id = jsondata['project_id']
 
 # Construct a BigQuery client object.
-credentials_path = 'testkey.json'
+credentials_path = 'key.json'
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
 client = bigquery.Client()
 
