@@ -120,7 +120,7 @@ def financials_load():
     query = f"""
     INSERT INTO  {actual_table_id}
     SELECT DISTINCT * FROM  {staging_table_id};
-    DELETE FROM {staging_table_id} where True
+    DELETE {staging_table_id} where True
     """
     query_job = client.query(query)
     print('Successfully loaded Financials details')
