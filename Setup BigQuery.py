@@ -74,6 +74,7 @@ def setupTable():
         bigquery.SchemaField("Cost", "FLOAT"),
         bigquery.SchemaField("Value", "FLOAT"),
         bigquery.SchemaField("Return", "FLOAT"),
+	bigquery.SchemaField("Type", "STRING"),
     ]
     table = bigquery.Table(project_id + "." + "Accounting.Position", schema=schema)
     table = client.create_table(table)  # Make an API request.
