@@ -27,13 +27,13 @@ def stockprice_extract(ti):
         i+= 1
 
     ohlcv_daily = ohlcv_daily.to_json(orient='records')
-    ti.xcom_push(key='ohlcv', ohlcv_daily)
+    ti.xcom_push(key='ohlcv', value=ohlcv_daily)
     
 def stockprice_staging(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
-    df = pd.DataFrame(eval(v))
+    df = pd.DataFrame(eval(ohlcv_daily))
+    print(df)
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x) / 1000))
-    print(df['Date'])
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)
@@ -47,13 +47,13 @@ def stockprice_staging(ti):
     client = bigquery.Client()
 
     #Load To staging
-    job = client.load_table_from_dataframe(ohlcv_daily, staging_table_id)
+    job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
     
 
 def stockprice_load():
     #Get Project ID
-    openfile=open('testkey.json')
+    openfile=open('key.json')
     jsondata=json.load(openfile)
     openfile.close()
     project_id = jsondata['project_id']
@@ -61,7 +61,7 @@ def stockprice_load():
     actual_table_id = "`" + project_id + ".Market.StockPrice`"
     
     #Connect To Bigquery
-    credentials_path = 'testkey.json'
+    credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
 

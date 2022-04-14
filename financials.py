@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 from google.cloud import bigquery
 import os
+import json
 
 # Get company_info for all the STI components and store them into dataframes
 def financials_extract(ti):
@@ -61,7 +62,7 @@ def financials_staging(ti):
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x)/1000))
 
     #Get Project ID
-    openfile=open('testkey.json')
+    openfile=open('key.json')
     jsondata=json.load(openfile)
     openfile.close()
     
@@ -75,28 +76,30 @@ def financials_staging(ti):
     job = client.load_table_from_dataframe(df, staging_table_id)
     job.result()
     
+    # job_config = bigquery.LoadJobConfig(
+    #     schema=[
+    #         bigquery.SchemaField("Company_Name", "STRING"),
+    #         bigquery.SchemaField("Ticker", "STRING"),
+    #         bigquery.SchemaField("Gross_Profits", "FLOAT"),
+    #         bigquery.SchemaField("Total_Debt", "FLOAT"),
+    #         bigquery.SchemaField("Total_Cashflow", "FLOAT"),
+    #         bigquery.SchemaField("Total_Revenue", "FLOAT"),
+    #         bigquery.SchemaField("Net_Income", "FLOAT"),
+    #         bigquery.SchemaField("Return_On_Equity", "FLOAT"),
+    #         bigquery.SchemaField("Book_per_Share", "FLOAT"),
+    #         bigquery.SchemaField("Date", "TIMESTAMP"),
+    #     ]
+    # )
+    # project_id = jsondata['project_id']
+    # table_id = project_id + ".Market_Staging.Financials_Staging"
 
-    job_config = bigquery.LoadJobConfig(
-        schema=[
-            bigquery.SchemaField("Company_Name", "STRING"),
-            bigquery.SchemaField("Ticker", "STRING"),
-            bigquery.SchemaField("Gross_Profits", "FLOAT"),
-            bigquery.SchemaField("Total_Debt", "FLOAT"),
-            bigquery.SchemaField("Total_Cashflow", "FLOAT"),
-            bigquery.SchemaField("Total_Revenue", "FLOAT"),
-            bigquery.SchemaField("Net_Income", "FLOAT"),
-            bigquery.SchemaField("Return_On_Equity", "FLOAT"),
-            bigquery.SchemaField("Book_per_Share", "FLOAT"),
-            bigquery.SchemaField("Date", "TIMESTAMP"),
-        ]
-    )
-    load_job = client.load_table_from_dataframe(
-        df,
-        table_id,
-        job_config=job_config,
-    )
+    # load_job = client.load_table_from_dataframe(
+    #     df,
+    #     table_id,
+    #     job_config=job_config,
+    # )
 
-    load_job.result()  # Waits for the job to complete.
+    # load_job.result()  # Waits for the job to complete.
 
     print('Successfully loaded company financials')
 
@@ -120,4 +123,4 @@ def financials_load():
     DELETE FROM {staging_table_id} where True
     """
     query_job = client.query(query)
-     print('Successfully loaded Financials details')
+    print('Successfully loaded Financials details')

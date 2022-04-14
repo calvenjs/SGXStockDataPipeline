@@ -4,6 +4,7 @@ import yfinance as yf
 import os
 import numpy as np
 import datetime
+import json 
 
 #Extract raw stock price for QD pipeline
 def stockprice_raw_extract(ti):
@@ -26,12 +27,12 @@ def stockprice_raw_extract(ti):
         i+= 1
 
     ohlcv_daily = ohlcv_daily.to_json(orient='records')
-    ti.xcom_push(key='ohlcv', ohlcv_daily)
+    ti.xcom_push(key='ohlcv', value=ohlcv_daily)
 
 
 def stockprice_raw_load(ti):
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceRawExtract'])[0]
-    df = pd.DataFrame(eval(v))
+    df = pd.DataFrame(eval(ohlcv_daily))
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x) / 1000))
     print(df['Date'])
     #Get Project ID
@@ -47,5 +48,5 @@ def stockprice_raw_load(ti):
     client = bigquery.Client()
 
     #Load data to Bigquery
-    job = client.load_table_from_dataframe(ohlcv_daily, table_id)
+    job = client.load_table_from_dataframe(df, table_id)
     job.result()

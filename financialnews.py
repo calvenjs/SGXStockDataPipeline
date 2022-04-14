@@ -2,6 +2,7 @@ import bs4
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
+import json
 
 from google.cloud import bigquery
 import os
