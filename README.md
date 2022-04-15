@@ -22,3 +22,7 @@ The project will extract data from interal sources provided in a flat file and e
 ![Airflow Dependency](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/airflow_dag.JPG)
 
 ## Setup
+1. Create a Google cloud service account and set up a service account
+2. Download the key(json file) and place it into this folder
+3. Run The Setup Big Query.py and Setup Views.py
+4. Run the Airflow
