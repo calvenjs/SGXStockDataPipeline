@@ -48,8 +48,8 @@ def setupTable():
     #Setup Stock Table
     schema = [
         bigquery.SchemaField("Date", "TIMESTAMP"),
-        bigquery.SchemaField("Ticker", "STRING"),
         bigquery.SchemaField("Stock", "STRING"),
+        bigquery.SchemaField("Ticker", "STRING"),
         bigquery.SchemaField("Open", "FLOAT"),
         bigquery.SchemaField("High", "FLOAT"),
         bigquery.SchemaField("Low", "FLOAT"),
