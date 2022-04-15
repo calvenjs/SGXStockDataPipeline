@@ -41,11 +41,10 @@ def dividend_extract(ti):
 def dividend_staging(ti):
     df = ti.xcom_pull(key='dividend_quarterly', task_ids = ['dividendExtract'])[0]
     df = pd.DataFrame(eval(df))
-    df['EX_Date'] = df['EX_Date'].apply(lambda x: datetime.fromtimestamp(int(x)/1000))
     if len(df) == 0:
         print('no dividend entries')
         return
-    
+    df['EX_Date'] = df['EX_Date'].apply(lambda x: datetime.fromtimestamp(int(x)/1000))
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)
