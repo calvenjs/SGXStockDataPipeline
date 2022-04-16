@@ -9,14 +9,20 @@ from stockprice import stockprice_extract, stockprice_staging, stockprice_load
 from portfolio import portfolio_extract, portfolio_staging, portfolio_transform, portfolio_load
 
 import smtplib
-from keys import EMAIL_PASSWORD
+from keys import EMAIL, PASSWORD
 
 
 def send_email():
+    '''
+    Sends an email to the recipient if the daily pipeline has been executed successfully. 
+
+    Input: email and password 
+    Output: None
+    '''
     server = smtplib.SMTP('smtp.gmail.com',587)
     server.starttls()
-    server.login('is3107group32@gmail.com',EMAIL_PASSWORD)
-    server.sendmail('is3107group32@gmail.com','is3107group32@gmail.com','The daily pipeline has been executed successfully.')
+    server.login(EMAIL,PASSWORD)
+    server.sendmail(EMAIL,EMAIL,'The daily pipeline has been executed successfully.')
 
 
 with DAG(
@@ -25,7 +31,7 @@ with DAG(
         'owner': 'airflow',
         'depends_on_past': False,
         'start_date': datetime(2022, 3, 11),
-        'email': ['is3107group32@gmail.com'],
+        'email': [EMAIL],
         'email_on_failure': True,
         'email_on_retry': True,
         'retries': 1,
@@ -136,10 +142,9 @@ with DAG(
     )
 
 
-    
+    # daily pipeline dependencies 
     STIExtraction >> stockpriceRawExtract >> stockpriceRawLoad >> sendEmail 
     STIExtraction >> stockpriceExtract >> stockpriceStaging >> stockpriceLoad >> sendEmail  
-
     financialNewsExtract >> financialNewsTransform >> financialNewsStaging >> financialNewsLoad >> sendEmail  
     portfolioExtract >> portfolioTransform >> portfolioStaging >> portfolioLoad >> sendEmail  
 

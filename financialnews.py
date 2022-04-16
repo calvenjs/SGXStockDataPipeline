@@ -13,6 +13,12 @@ from nltk.sentiment.vader import SentimentIntensityAnalyzer
 sid = SentimentIntensityAnalyzer()
 
 def financialnews_backlog():
+    '''
+    Obtain backlog of financial news related to the STI ETF from MarketWatch.com.
+    Sentiment analysis will be performed on the news headlines to generate the sentiment score. 
+
+    Output: Pandas DataFrame containing the news headline, date of publication, URL, and sentiment score. 
+    '''
     # url that we are extracting from 
     url = "https://www.marketwatch.com/investing/index/sti?countrycode=sg"
     
@@ -95,6 +101,13 @@ def financialnews_backlog():
 
     
 def financialnews_extract(ti):
+
+    '''
+    Extract financial news headlines related to the STI ETF from MarketWatch.com.
+
+    Output: Python Dictionary with keys being the news headline, date of publication, URL and sentiment score,
+    and values being a Python List of the respective values.  
+    '''
     # url that we are extracting from 
     url = "https://www.marketwatch.com/investing/index/sti?countrycode=sg"
 
@@ -148,6 +161,13 @@ def financialnews_extract(ti):
 
 def financialnews_transform(ti):
 
+    '''
+    Performs sentiment analysis on news headlines, generating a sentiment score. 
+
+    Input: the Python Dictionary from financialnews_extract (pulled from xcom)
+    Output: a Python List containing sentiment scores. 
+    '''
+
     # retrieve data from xcom 
     headline_date_link = ti.xcom_pull(key='headline_date_link', task_ids = ['financialNewsExtract'])[0]
 
@@ -175,6 +195,13 @@ def financialnews_transform(ti):
 
 def financialnews_staging(ti):
 
+    ''' 
+    Loads the news headline, date of publication, URL and sentiment score into the staging table in Google BigQuery.
+
+    Input: Python Dictionary from financialnews_extract, and the Python List of sentiment scores from financialnews_transform (pulled from xcom), 
+           key.json file required for Google BigQuery's authentication 
+    Output: nil
+    '''
     # check if there are articles extracted for the day 
     no_articles = ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsTransform'])[0]
     
@@ -228,6 +255,13 @@ def financialnews_staging(ti):
     print('Successfully loaded news headlines')
     
 def financialnews_load():
+
+    '''
+    Loads the data from the staging table into the data warehouse in Google BigQuery.
+
+    Input: key.json file required for Google BigQuery's authentication 
+    Output: None
+    '''
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)
