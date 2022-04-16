@@ -8,6 +8,13 @@ The project will extract data from interal sources provided in a flat file and e
 - Portfolio Managers
 - Quantitative Developers
 
+### Data
+- STI Components Daily Tick OHLCV
+- STI Components Financials
+- STI Components Dividend
+- MarketWatch Asian Markets News Headline
+- Portfolio Positions Flat File
+
 ### Tools & Technologies
 - Cloud: Google Cloud Platform
 - Orchestrator: Apache Airflow
