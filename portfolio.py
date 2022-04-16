@@ -6,6 +6,11 @@ import pandas as pd
 import json
 
 def portfolio_extract(ti):
+    '''
+    Extract Portfolio Positions from Flat File
+    Input: CSV
+    Output: JSON
+    '''
     #If portfolio file exist, start ETL Process
     if exists('Portfolio.csv'):
         df = pd.read_csv("Portfolio.csv")
@@ -14,6 +19,11 @@ def portfolio_extract(ti):
     ti.xcom_push(key='df',value=df)
 
 def portfolio_transform(ti):
+    '''
+    Transform by Generating Cost of Position Column
+    Input: JSON
+    Output: JSON
+    '''
     df = ti.xcom_pull(key='df', task_ids = ['portfolioExtract'])[0]
     df = pd.DataFrame(eval(df))
     df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
@@ -25,6 +35,11 @@ def portfolio_transform(ti):
     ti.xcom_push(key='df',value=df)
 
 def portfolio_staging(ti):
+    '''
+    Load Portfolio Data to Staging Table
+    Input: JSON
+    Output: None
+    '''
     df = ti.xcom_pull(key='df', task_ids = ['portfolioTransform'])[0]
     df = pd.DataFrame(eval(df))
     df['Date'] = df['Date'].apply(lambda x: ''.join(x.split('\\')))
@@ -47,6 +62,12 @@ def portfolio_staging(ti):
     job.result()
 
 def portfolio_load():
+    '''
+    Load Portfolio Data From Staging Table to Main Tables
+    Derive Value of Position Based on Stock Price
+    Input: 
+    Output: None, Silent Print Success Message
+    '''
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)

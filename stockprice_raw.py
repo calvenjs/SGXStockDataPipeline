@@ -6,8 +6,14 @@ import numpy as np
 import datetime
 import json 
 
-#Extract raw stock price for QD pipeline
+# Pipeline for Quantitative Developers
 def stockprice_raw_extract(ti):
+    '''
+    Extract stock information in STI Components for past five days
+    Gets the OHLCV and Adjusted Close using Yahoo Finance API in Pandas Dataframe and push as JSON
+    Input: List of Stock Tickers
+    Output: None
+    '''
     df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
     df = pd.DataFrame(eval(df))
     #Rename DF
@@ -31,6 +37,11 @@ def stockprice_raw_extract(ti):
 
 
 def stockprice_raw_load(ti):
+    '''
+    Load Stock Data to Main Table
+    Input: List of Stock Tickers
+    Output: None
+    '''
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceRawExtract'])[0]
     df = pd.DataFrame(eval(ohlcv_daily))
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x) / 1000))

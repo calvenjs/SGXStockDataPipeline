@@ -5,8 +5,14 @@ import yfinance as yf
 import os
 import json
 
-#Pipeline for Portfolio Manager
+# Pipeline for Portfolio Manager
 def stockprice_extract(ti):
+    '''
+    Extract stock information in STI Components for past five days
+    Gets the OHLCV and Adjusted Close using Yahoo Finance API in Pandas Dataframe and push as JSON
+    Input: List of Stock Tickers
+    Output: None
+    '''
     df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
     df = pd.DataFrame(eval(df))
     #Rename DF
@@ -30,6 +36,11 @@ def stockprice_extract(ti):
     ti.xcom_push(key='ohlcv', value=ohlcv_daily)
     
 def stockprice_staging(ti):
+    '''
+    Load Stock Data to Staging Table
+    Input: List of Stock Tickers
+    Output: None
+    '''
     ohlcv_daily = ti.xcom_pull(key='ohlcv', task_ids=['stockpriceExtract'])[0]
     df = pd.DataFrame(eval(ohlcv_daily))
     print(df)
@@ -41,7 +52,7 @@ def stockprice_staging(ti):
     project_id = jsondata['project_id']
     staging_table_id = project_id + ".Market_Staging.StockPrice_Staging"
 
-    #Connect to Bigquery
+    #Connect to BigQuery
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
@@ -52,6 +63,12 @@ def stockprice_staging(ti):
     
 
 def stockprice_load():
+    '''
+    Load Stock Data from Staging Table to Main Tables
+    Derive Moving-Average(5) and Signal columns using SQL, and pass Close, Moving-Average(5) and Signal to Main Tables
+    Input: List of Stock Tickers
+    Output: None, Silent Print Success
+    '''
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)
@@ -65,7 +82,7 @@ def stockprice_load():
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]= credentials_path
     client = bigquery.Client()
 
-    #Load Data from Staging table to Acutal table
+    #Load Data from Staging table to Main table
     query = f"""
     INSERT INTO {actual_table_id}
     SELECT *
