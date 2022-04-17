@@ -1,36 +1,36 @@
 # SGX Stock Data Pipeline
-This repo shows our project on STI constituents data pipeline.
 
 ### Objective
-The project will extract data from interal sources provided in a flat file and external sources like YahooFinance API and scrapes news from MarketWatch. Then, the data would be processed by batch and stored to the data warehouse periodically (daily). The batch job will also apply transformations, and create the desired tables to load into the central repository for users to access.
+The high-level objective of the data pipeline is to process financial data to support the firm’s 
+investment process. The data pipeline begins with the ingestion of data from various sources, 
+followed by the transformation of that information into actionable insights, and ultimately 
+displaying them to investment professionals’ use to monetize ideas.
 
 ### Consumers
 - Portfolio Managers
 - Quantitative Developers
 
 ### Data
-- STI Components Daily Tick OHLCV
-- STI Components Financials
-- STI Components Dividend
-- MarketWatch Asian Markets News Headline
-- Portfolio Positions Flat File
+- STI Components Daily OHLCV
+- STI Components Company Financials
+- STI Components Company Dividends
+- MarketWatch News Headlines
+- Portfolio Positions CSV File
 
 ### Tools & Technologies
 - Cloud: Google Cloud Platform
-- Orchestrator: Apache Airflow
+- Workflow Orchestrator: Apache Airflow
 - Data Warehouse: Google BigQuery
 - Language: Python
 
-### Architecture
+### Data Pipeline Architecture
 ![Pipeline](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
 
+### Data Warehouse Architecture
+![Warehouse](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/warehouse_architecture.JPG)
 
 ### Airflow DAG
 ![Airflow Dependency](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/airflow_dag.JPG)
 
-## Setup
+### Setup
 [Setup Full Guide](https://docs.google.com/document/d/16P-mJLdfNc8EPg8126i3VaNIoV9kEAhqdbCzCAXj6LU/edit)
-1. Create a Google cloud service account and set up a service account
-2. Download the key(json file) and place it into this folder
-3. Run The Setup BigQuery.py and Setup Views.py
-4. Run the Airflow DAG

@@ -8,6 +8,7 @@ import json
 def portfolio_extract(ti):
     '''
     Extract Portfolio Positions from Flat File
+
     Input: CSV
     Output: JSON
     '''
@@ -21,6 +22,7 @@ def portfolio_extract(ti):
 def portfolio_transform(ti):
     '''
     Transform by Generating Cost of Position Column
+
     Input: JSON
     Output: JSON
     '''
@@ -37,6 +39,7 @@ def portfolio_transform(ti):
 def portfolio_staging(ti):
     '''
     Load Portfolio Data to Staging Table
+    
     Input: JSON
     Output: None
     '''
@@ -63,9 +66,9 @@ def portfolio_staging(ti):
 
 def portfolio_load():
     '''
-    Load Portfolio Data From Staging Table to Main Tables
-    Derive Value of Position Based on Stock Price
-    Input: 
+    Load Portfolio Data From Staging Table to Main Tables and Derive Value of Position Based on Stock Price
+    
+    Input: None
     Output: None, Silent Print Success Message
     '''
     #Get Project ID

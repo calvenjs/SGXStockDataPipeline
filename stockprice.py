@@ -10,6 +10,7 @@ def stockprice_extract(ti):
     '''
     Extract stock information in STI Components for past five days
     Gets the OHLCV and Adjusted Close using Yahoo Finance API in Pandas Dataframe and push as JSON
+
     Input: List of Stock Tickers
     Output: None
     '''
@@ -38,6 +39,7 @@ def stockprice_extract(ti):
 def stockprice_staging(ti):
     '''
     Load Stock Data to Staging Table
+
     Input: List of Stock Tickers
     Output: None
     '''
@@ -66,6 +68,7 @@ def stockprice_load():
     '''
     Load Stock Data from Staging Table to Main Tables
     Derive Moving-Average(5) and Signal columns using SQL, and pass Close, Moving-Average(5) and Signal to Main Tables
+    
     Input: List of Stock Tickers
     Output: None, Silent Print Success
     '''

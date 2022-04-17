@@ -11,6 +11,7 @@ def stockprice_raw_extract(ti):
     '''
     Extract stock information in STI Components for past five days
     Gets the OHLCV and Adjusted Close using Yahoo Finance API in Pandas Dataframe and push as JSON
+
     Input: List of Stock Tickers
     Output: None
     '''
@@ -39,6 +40,7 @@ def stockprice_raw_extract(ti):
 def stockprice_raw_load(ti):
     '''
     Load Stock Data to Main Table
+    
     Input: List of Stock Tickers
     Output: None
     '''

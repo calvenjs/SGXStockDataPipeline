@@ -2,6 +2,12 @@ import pandas as pd
 import requests
 
 def STIextraction(ti):
+    '''
+    Retrieves the STI ETF constituents.
+
+    Input: URL 
+    Output: STI ETF constituents which include ticker symbol and stock name. This will be pushed to xcom and stored in a CSV. 
+    '''
     #Retrieve STI Index (^STI) components
     try:
   

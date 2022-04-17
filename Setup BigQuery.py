@@ -18,6 +18,9 @@ client = bigquery.Client()
 
 
 def setupDataset():
+    '''
+    Sets up the dataset
+    '''
     dataset = ["Accounting", "Accounting_Staging", "Market", "Market_Raw", "Market_Staging", "Reference", "Reference_Staging"]
 
     for d in dataset:
@@ -32,6 +35,9 @@ def setupDataset():
         print("Created dataset {}.{}".format(client.project, dataset.dataset_id))
 
 def setupTable():
+    '''
+    Sets up the respective tables
+    '''
     #Setup Dividend Table
     schema = [
         bigquery.SchemaField("EX_Date", "TIMESTAMP"),

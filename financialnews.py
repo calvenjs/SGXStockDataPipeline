@@ -17,6 +17,7 @@ def financialnews_backlog():
     Obtain backlog of financial news related to the STI ETF from MarketWatch.com.
     Sentiment analysis will be performed on the news headlines to generate the sentiment score. 
 
+    Input: URL
     Output: Pandas DataFrame containing the news headline, date of publication, URL, and sentiment score. 
     '''
     # url that we are extracting from 
@@ -105,6 +106,7 @@ def financialnews_extract(ti):
     '''
     Extract financial news headlines related to the STI ETF from MarketWatch.com.
 
+    Input: URL
     Output: Python Dictionary with keys being the news headline, date of publication, URL and sentiment score,
     and values being a Python List of the respective values.  
     '''
@@ -200,7 +202,7 @@ def financialnews_staging(ti):
 
     Input: Python Dictionary from financialnews_extract, and the Python List of sentiment scores from financialnews_transform (pulled from xcom), 
            key.json file required for Google BigQuery's authentication 
-    Output: nil
+    Output: None
     '''
     # check if there are articles extracted for the day 
     no_articles = ti.xcom_pull(key = 'no articles', task_ids = ['financialNewsTransform'])[0]

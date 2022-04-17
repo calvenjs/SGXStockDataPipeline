@@ -9,6 +9,7 @@ import json
 def dividend_extract(ti):
     '''
     Extract Dividend data of STI Components using YF API and push to Staging Table Task
+    
     Input: STI Component Tickers
     Output: JSON
     '''
@@ -46,8 +47,9 @@ def dividend_extract(ti):
 def dividend_staging(ti):
     '''
     Load dividend data to staging table
-    Input: 
-    Output: 
+
+    Input: None
+    Output: None
     '''
     df = ti.xcom_pull(key='dividend_quarterly', task_ids = ['dividendExtract'])[0]
     df = pd.DataFrame(eval(df))
@@ -74,7 +76,8 @@ def dividend_staging(ti):
 def dividend_load():
     '''
     Load dividend data to main table from staging table
-    Input: 
+
+    Input: None
     Output: Silent print success
     '''
     #Get Project ID

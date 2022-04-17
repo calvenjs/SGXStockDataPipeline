@@ -18,6 +18,9 @@ client = bigquery.Client()
 
 
 def setupviewDataset():
+    '''
+    Sets up the views dataset
+    '''
     # Construct a full Dataset object to send to the API.
     dataset = bigquery.Dataset(project_id  + ".Views" )
     # TODO(developer): Specify the geographic location where the dataset should reside.
@@ -29,6 +32,9 @@ def setupviewDataset():
     print("Created dataset {}.{}".format(client.project, dataset.dataset_id))
 
 def setupViews():
+    '''
+    Sets up the respective views
+    '''
     #Signalbuy
     view_id = project_id + ".Views." + "SignalBuy"
     source_id = "`" + project_id + ".Market.StockPrice`"
