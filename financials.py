@@ -10,6 +10,7 @@ def financials_extract(ti):
     '''
     Obtain the company info on yfinance based on the STI tickers
     
+    Input: Tickers of STI companies (pulled from xcom)
     Output: Array of company info for all STI components
     '''
 
@@ -37,6 +38,7 @@ def financials_transform(ti):
     Extract key information from the array of company info, such as Company_Name and Net_Income
     Store the result as a dataframe, and then transform into json format
     
+    Input: Array of company info for all STI components (pulled from xcom)
     Output: Json file containing the key company information. 
     '''
     company_info = ti.xcom_pull(key = 'company info', task_ids=['financialsExtract'])
@@ -72,6 +74,7 @@ def financials_staging(ti):
     Create financials table in the staging area if not exist
     Push the info for each company in the json into the table
     
+    Input: Json file containing the key company information (pulled from xcom)
     Output: Staging table that organize key information of STI companies
     '''
     results = ti.xcom_pull(task_ids=["financialsTransform"], key="processed_user_info")
