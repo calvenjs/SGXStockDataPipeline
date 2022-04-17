@@ -5,8 +5,13 @@ from google.cloud import bigquery
 import os
 import json
 
-# Get company_info for all the STI components and store them into dataframes
+
 def financials_extract(ti):
+    '''
+    Obtain the company info on yfinance based on the STI tickers
+    
+    Output: Array of company info for all STI components
+    '''
 
     # Get tickers for STIcomponets using xcom
     df = ti.xcom_pull(key='STIcomponents', task_ids=['STIExtract'])[0]
@@ -26,8 +31,14 @@ def financials_extract(ti):
 
     ti.xcom_push(key = 'company info', value = company_info)
 
-# Extract key information or fields from company_info and convert into json format
+    
 def financials_transform(ti):
+    '''
+    Extract key information from the array of company info, such as Company_Name and Net_Income
+    Store the result as a dataframe, and then transform into json format
+    
+    Output: Json file containing the key company information. 
+    '''
     company_info = ti.xcom_pull(key = 'company info', task_ids=['financialsExtract'])
     numOfCompany = len(company_info[0])
 
@@ -55,8 +66,14 @@ def financials_transform(ti):
     df = df.to_json(orient='records')
     ti.xcom_push(key="processed_user_info", value=df)
 
-# Create financials table in the staging area if not exist, and push the info for each company in the json into the table
+
 def financials_staging(ti):
+    '''
+    Create financials table in the staging area if not exist
+    Push the info for each company in the json into the table
+    
+    Output: Staging table that organize key information of STI companies
+    '''
     results = ti.xcom_pull(task_ids=["financialsTransform"], key="processed_user_info")
     df = pd.DataFrame(eval(results[0]))
     df['Date'] = df['Date'].apply(lambda x: datetime.datetime.fromtimestamp(int(x)/1000))
@@ -103,8 +120,12 @@ def financials_staging(ti):
 
     print('Successfully loaded company financials')
 
-# Load information in the staging table into the storage table
 def financials_load():
+    '''
+    Load information in the staging table into the storage table
+    
+    Output: Storage table that organize key information of STI companies
+    '''
     credentials_path = 'key.json'
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
     client = bigquery.Client()
