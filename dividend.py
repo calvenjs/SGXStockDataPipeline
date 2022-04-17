@@ -7,6 +7,11 @@ from datetime import datetime
 import json
 
 def dividend_extract(ti):
+    '''
+    Extract Dividend data of STI Components using YF API and push to Staging Table Task
+    Input: STI Component Tickers
+    Output: JSON
+    '''
     #Initialize Start and Enddate
     startday = datetime(datetime.today().year, datetime.today().month, 1)
     endday = startday + relativedelta(months=1)
@@ -39,6 +44,11 @@ def dividend_extract(ti):
 
 
 def dividend_staging(ti):
+    '''
+    Load dividend data to staging table
+    Input: 
+    Output: 
+    '''
     df = ti.xcom_pull(key='dividend_quarterly', task_ids = ['dividendExtract'])[0]
     df = pd.DataFrame(eval(df))
     if len(df) == 0:
@@ -62,6 +72,11 @@ def dividend_staging(ti):
 
 
 def dividend_load():
+    '''
+    Load dividend data to main table from staging table
+    Input: 
+    Output: Silent print success
+    '''
     #Get Project ID
     openfile=open('key.json')
     jsondata=json.load(openfile)
@@ -75,7 +90,7 @@ def dividend_load():
     client = bigquery.Client()
     table_id = "bustling-brand-344211.Market_Staging.Dividend_Staging"
     
-    #Transform and Load to Acutal Table
+    #Transform and Load to Main Table
     query = f"""
     INSERT INTO {actual_table_id} SELECT DISTINCT * FROM {staging_table_id};
     DELETE FROM {staging_table_id} where True
