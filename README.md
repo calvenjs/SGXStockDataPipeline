@@ -6,6 +6,11 @@ investment process. The data pipeline begins with the ingestion of data from var
 followed by the transformation of that information into actionable insights, and ultimately 
 displaying them to investment professionals’ use to monetize ideas.
 
+### Tools & Technologies
+- Storage - [**BigQuery**](https://cloud.google.com/bigquery)
+- Orchestration - [**Airflow**](https://airflow.apache.org)
+- Language - [**Python**](https://www.python.org)
+
 ### Consumers
 - Portfolio Managers
 - Quantitative Developers
