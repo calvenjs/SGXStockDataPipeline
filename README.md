@@ -7,6 +7,7 @@ followed by the transformation of that information into actionable insights, and
 displaying them to investment professionals’ use to monetize ideas.
 
 ### Tools & Technologies
+- Cloud - Google Cloud Platform
 - Storage - [**BigQuery**](https://cloud.google.com/bigquery)
 - Orchestration - [**Airflow**](https://airflow.apache.org)
 - Language - [**Python**](https://www.python.org)
@@ -21,12 +22,6 @@ displaying them to investment professionals’ use to monetize ideas.
 - STI Components Company Dividends
 - MarketWatch News Headlines
 - Portfolio Positions CSV File
-
-### Tools & Technologies
-- Cloud: Google Cloud Platform
-- Workflow Orchestrator: Apache Airflow
-- Data Warehouse: Google BigQuery
-- Language: Python
 
 ### Data Pipeline Architecture
 ![Pipeline](https://github.com/calvenjs/SGXStockDataPipeline/blob/main/images/pipeline_architecture.JPG)
